@@ -1,0 +1,11 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import SettingsForm from "../../components/vue/SettingsForm.vue";
+---
+
+<AdminLayout title="Settings">
+  <div class="admin-header">
+    <h1>Settings</h1>
+  </div>
+  <SettingsForm client:load />
+</AdminLayout>

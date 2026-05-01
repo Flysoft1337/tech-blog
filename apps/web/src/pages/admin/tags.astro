@@ -1,0 +1,23 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import AdminTable from "../../components/vue/AdminTable.vue";
+---
+
+<AdminLayout title="Tags">
+  <div class="admin-header">
+    <h1>Tags</h1>
+  </div>
+  <AdminTable
+    client:load
+    endpoint="/api/v1/admin/tags"
+    columns={[
+      { key: "name", label: "Name" },
+      { key: "slug", label: "Slug" },
+      { key: "postCount", label: "Posts" },
+    ]}
+    createFields={[
+      { key: "name", label: "Name", required: true },
+      { key: "slug", label: "Slug", required: true },
+    ]}
+  />
+</AdminLayout>

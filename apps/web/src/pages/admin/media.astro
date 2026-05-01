@@ -1,0 +1,11 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import MediaUploader from "../../components/vue/MediaUploader.vue";
+---
+
+<AdminLayout title="Media">
+  <div class="admin-header">
+    <h1>Media</h1>
+  </div>
+  <MediaUploader client:load />
+</AdminLayout>

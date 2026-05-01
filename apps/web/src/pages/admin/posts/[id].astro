@@ -1,0 +1,14 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import PostEditor from "../../../components/vue/PostEditor.vue";
+
+const { id } = Astro.params;
+---
+
+<AdminLayout title={id === "new" ? "New Post" : "Edit Post"}>
+  <div class="admin-header">
+    <h1>{id === "new" ? "New Post" : "Edit Post"}</h1>
+    <a href="/admin/posts" class="btn">Back to Posts</a>
+  </div>
+  <PostEditor client:load postId={id === "new" ? undefined : id} />
+</AdminLayout>

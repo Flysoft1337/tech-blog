@@ -1,0 +1,51 @@
+---
+import BlogLayout from "../layouts/BlogLayout.astro";
+import PostCard from "../components/blog/PostCard.astro";
+import Pagination from "../components/common/Pagination.astro";
+
+const page = Number(Astro.url.searchParams.get("page")) || 1;
+const API_BASE = import.meta.env.PUBLIC_API_URL || "http://localhost:3000";
+
+let posts = { items: [], total: 0, page: 1, pageSize: 10, totalPages: 1 };
+
+try {
+  const res = await fetch(`${API_BASE}/api/v1/posts?page=${page}`);
+  const json = await res.json();
+  if (json.success) posts = json.data;
+} catch {
+  // API not available during build
+}
+---
+
+<BlogLayout title="Home - Tech Blog">
+  <section class="posts-list">
+    {posts.items.length > 0 ? (
+      posts.items.map((post: any) => (
+        <PostCard
+          title={post.title}
+          slug={post.slug}
+          excerpt={post.excerpt}
+          coverImage={post.coverImage}
+          publishedAt={post.publishedAt}
+          authorName={post.authorName}
+          categoryName={post.categoryName}
+          categorySlug={post.categorySlug}
+          pinned={post.pinned}
+        />
+      ))
+    ) : (
+      <div class="empty-state">
+        <p>No posts yet.</p>
+      </div>
+    )}
+  </section>
+  <Pagination currentPage={posts.page} totalPages={posts.totalPages} basePath="/" />
+</BlogLayout>
+
+<style>
+  .empty-state {
+    text-align: center;
+    padding: 4rem 0;
+    color: var(--color-text-secondary);
+  }
+</style>

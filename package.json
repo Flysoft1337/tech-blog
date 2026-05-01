@@ -1,0 +1,23 @@
+{
+  "name": "tech-blog",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "dev:server": "pnpm --filter @tech-blog/server dev",
+    "dev:web": "pnpm --filter @tech-blog/web dev",
+    "build": "pnpm --filter @tech-blog/shared build && pnpm --filter @tech-blog/server build && pnpm --filter @tech-blog/web build",
+    "db:generate": "pnpm --filter @tech-blog/server db:generate",
+    "db:migrate": "pnpm --filter @tech-blog/server db:migrate"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "esbuild",
+      "sharp"
+    ]
+  }
+}

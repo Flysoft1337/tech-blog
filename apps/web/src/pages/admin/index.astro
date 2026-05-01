@@ -1,0 +1,93 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Dashboard">
+  <div class="admin-header">
+    <h1>Dashboard</h1>
+  </div>
+  <div class="stats-grid" id="stats">
+    <div class="stat-card">
+      <div class="label">Posts</div>
+      <div class="value" id="stat-posts">-</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Comments</div>
+      <div class="value" id="stat-comments">-</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Categories</div>
+      <div class="value" id="stat-categories">-</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Media</div>
+      <div class="value" id="stat-media">-</div>
+    </div>
+  </div>
+  <div class="admin-card">
+    <h3>Recent Posts</h3>
+    <table class="admin-table" style="margin-top:1rem">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="recent-posts">
+        <tr><td colspan="3" style="text-align:center;">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</AdminLayout>
+
+<script>
+  async function loadDashboard() {
+    const token = localStorage.getItem("accessToken");
+    const headers = { Authorization: `Bearer ${token}` };
+
+    try {
+      const [postsRes, commentsRes, catsRes, mediaRes] = await Promise.all([
+        fetch("/api/v1/admin/posts?pageSize=5", { headers }),
+        fetch("/api/v1/admin/comments?pageSize=1", { headers }),
+        fetch("/api/v1/admin/categories", { headers }),
+        fetch("/api/v1/admin/media?pageSize=1", { headers }),
+      ]);
+
+      const posts = await postsRes.json();
+      const comments = await commentsRes.json();
+      const cats = await catsRes.json();
+      const media = await mediaRes.json();
+
+      document.getElementById("stat-posts")!.textContent =
+        posts.data?.total?.toString() || "0";
+      document.getElementById("stat-comments")!.textContent =
+        comments.data?.total?.toString() || "0";
+      document.getElementById("stat-categories")!.textContent =
+        cats.data?.length?.toString() || "0";
+      document.getElementById("stat-media")!.textContent =
+        media.data?.total?.toString() || "0";
+
+      const tbody = document.getElementById("recent-posts")!;
+      if (posts.data?.items?.length) {
+        tbody.innerHTML = posts.data.items
+          .map(
+            (p: any) => `
+          <tr>
+            <td><a href="/admin/posts/${p.id}">${p.title}</a></td>
+            <td><span class="badge badge-${p.status}">${p.status}</span></td>
+            <td>${new Date(p.createdAt).toLocaleDateString("zh-CN")}</td>
+          </tr>`
+          )
+          .join("");
+      } else {
+        tbody.innerHTML =
+          '<tr><td colspan="3" style="text-align:center;">No posts</td></tr>';
+      }
+    } catch {
+      // handle error silently
+    }
+  }
+
+  loadDashboard();
+</script>

@@ -1,0 +1,56 @@
+---
+import BlogLayout from "../../layouts/BlogLayout.astro";
+import PostCard from "../../components/blog/PostCard.astro";
+import Pagination from "../../components/common/Pagination.astro";
+
+const { slug } = Astro.params;
+const page = Number(Astro.url.searchParams.get("page")) || 1;
+const API_BASE = import.meta.env.PUBLIC_API_URL || "http://localhost:3000";
+
+let category: any = null;
+let posts = { items: [], total: 0, page: 1, pageSize: 10, totalPages: 1 };
+
+try {
+  const catRes = await fetch(`${API_BASE}/api/v1/categories`);
+  const catJson = await catRes.json();
+  if (catJson.success) {
+    category = catJson.data.find((c: any) => c.slug === slug);
+  }
+
+  const res = await fetch(`${API_BASE}/api/v1/posts?page=${page}&category=${slug}`);
+  const json = await res.json();
+  if (json.success) posts = json.data;
+} catch {}
+---
+
+<BlogLayout title={`${category?.name || slug} - Tech Blog`}>
+  <h1 class="page-title">Category: {category?.name || slug}</h1>
+  {category?.description && <p class="page-desc">{category.description}</p>}
+  <section class="posts-list">
+    {posts.items.map((post: any) => (
+      <PostCard
+        title={post.title}
+        slug={post.slug}
+        excerpt={post.excerpt}
+        coverImage={post.coverImage}
+        publishedAt={post.publishedAt}
+        authorName={post.authorName}
+        categoryName={post.categoryName}
+        categorySlug={post.categorySlug}
+        pinned={post.pinned}
+      />
+    ))}
+  </section>
+  <Pagination currentPage={posts.page} totalPages={posts.totalPages} basePath={`/category/${slug}`} />
+</BlogLayout>
+
+<style>
+  .page-title {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+  }
+  .page-desc {
+    color: var(--color-text-secondary);
+    margin-bottom: 2rem;
+  }
+</style>
