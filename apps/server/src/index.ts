@@ -26,10 +26,12 @@ setInterval(async () => {
       await db.update(posts).set({
         status: "published",
         publishedAt: post.scheduledAt,
-      }).where(eq(posts.id, post.id)).run();
+      }).where(and(eq(posts.id, post.id), eq(posts.status, "scheduled"))).run();
       console.log(`[scheduler] Published scheduled post: ${post.title}`);
     }
-  } catch {}
+  } catch (err) {
+    console.error("[scheduler] Error:", err);
+  }
 }, 60_000);
 
 try {

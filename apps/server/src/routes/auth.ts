@@ -64,7 +64,9 @@ export default async function authRoutes(app: FastifyInstance) {
   // Refresh token
   app.post<{
     Body: { refreshToken: string };
-  }>("/refresh", async (request, reply) => {
+  }>("/refresh", {
+    config: { rateLimit: { max: 20, timeWindow: "15 minute" } },
+  }, async (request, reply) => {
     try {
       const decoded = app.jwt.verify<{
         id: number;

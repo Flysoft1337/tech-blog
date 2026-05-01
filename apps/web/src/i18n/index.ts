@@ -539,8 +539,9 @@ const translations: Record<Locale, Record<string, string>> = {
   },
 };
 
-let currentLocale: Locale = defaultLocale;
 let _serverLocale: Locale | null = null;
+
+let currentLocale: Locale = defaultLocale;
 
 export function setLocale(locale: Locale) {
   currentLocale = locale;
@@ -570,7 +571,7 @@ export function getLocale(): Locale {
 export function initLocale(astroRequest?: Request) {
   if (astroRequest) {
     const cookie = astroRequest.headers.get("cookie") || "";
-    _serverLocale = getLocaleFromCookieHeader(cookie);
+    setServerLocale(getLocaleFromCookieHeader(cookie));
   }
 }
 
@@ -586,6 +587,16 @@ export function getLocaleFromCookieHeader(cookieHeader?: string): Locale {
 
 export function setServerLocale(locale: Locale) {
   _serverLocale = locale;
+}
+
+export function runWithLocale<T>(locale: Locale, fn: () => T): T {
+  const prev = _serverLocale;
+  _serverLocale = locale;
+  try {
+    return fn();
+  } finally {
+    _serverLocale = prev;
+  }
 }
 
 export function t(key: string, params?: Record<string, string | number>): string {

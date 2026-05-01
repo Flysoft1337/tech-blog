@@ -1,8 +1,9 @@
 import { defineMiddleware } from "astro:middleware";
-import { setServerLocale, getLocaleFromCookieHeader } from "./i18n/index";
+import { getLocaleFromCookieHeader, setServerLocale, runWithLocale } from "./i18n/index";
 
 export const onRequest = defineMiddleware((context, next) => {
   const cookie = context.request.headers.get("cookie") || "";
-  setServerLocale(getLocaleFromCookieHeader(cookie));
-  return next();
+  const locale = getLocaleFromCookieHeader(cookie);
+  setServerLocale(locale);
+  return runWithLocale(locale, () => next());
 });

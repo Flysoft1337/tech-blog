@@ -49,17 +49,34 @@ export default async function mediaRoutes(app: FastifyInstance) {
   });
 
   // Upload file
+  const ALLOWED_MIME = new Set([
+    "image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml",
+    "video/mp4", "video/webm",
+    "application/pdf",
+    "text/plain", "text/markdown",
+  ]);
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
   app.post("/upload", async (request, reply) => {
     const file = await request.file();
     if (!file) {
       return reply.status(400).send({ success: false, error: "No file uploaded" });
     }
 
-    const ext = extname(file.filename);
+    if (!ALLOWED_MIME.has(file.mimetype)) {
+      return reply.status(400).send({ success: false, error: "File type not allowed" });
+    }
+
+    const ext = extname(file.filename).toLowerCase();
     const filename = `${randomUUID()}${ext}`;
     const filepath = resolve(uploadDir, filename);
 
     await pipeline(file.file, createWriteStream(filepath));
+
+    if (file.file.bytesRead > MAX_FILE_SIZE) {
+      unlinkSync(filepath);
+      return reply.status(400).send({ success: false, error: "File too large (max 10MB)" });
+    }
 
     const result = await db
       .insert(media)

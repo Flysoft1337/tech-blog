@@ -149,12 +149,16 @@ export default async function postsRoutes(app: FastifyInstance) {
     const { tagIds, ...data } = request.body;
     const contentHtml = await renderMarkdown(data.content);
 
+    if (data.scheduledAt) {
+      data.scheduledAt = data.scheduledAt.replace("T", " ").substring(0, 16).padEnd(19, ":00");
+    }
+
     const result = await db
       .insert(posts)
       .values({
         ...data,
         contentHtml,
-        status: (data.status as "draft" | "published") || "draft",
+        status: (data.status as "draft" | "published" | "scheduled") || "draft",
         pinned: data.pinned || false,
         authorId: request.user.id,
         publishedAt:
@@ -200,7 +204,15 @@ export default async function postsRoutes(app: FastifyInstance) {
       return reply.status(404).send({ success: false, error: "Post not found" });
     }
 
-    const updateData: Record<string, unknown> = { ...data };
+    if (data.scheduledAt) {
+      data.scheduledAt = data.scheduledAt.replace("T", " ").substring(0, 16).padEnd(19, ":00");
+    }
+
+    // Filter out undefined values to avoid overwriting existing data
+    const updateData: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined) updateData[key] = value;
+    }
     if (data.content) {
       updateData.contentHtml = await renderMarkdown(data.content);
     }

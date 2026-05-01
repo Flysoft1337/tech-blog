@@ -110,68 +110,29 @@ export default async function publicRoutes(app: FastifyInstance) {
       return reply.status(404).send({ success: false, error: "Post not found" });
     }
 
-    // Increment view count
-    await db.update(posts).set({ viewCount: sql`view_count + 1` }).where(eq(posts.id, post.id)).run();
+    // Increment view count (fire and forget)
+    db.update(posts).set({ viewCount: sql`view_count + 1` }).where(eq(posts.id, post.id)).run();
 
-    const author = await db
-      .select({ displayName: users.displayName })
-      .from(users)
-      .where(eq(users.id, post.authorId))
-      .get();
+    // Parallel queries for post details
+    const [author, category, postTagRows, prevPost, nextPost] = await Promise.all([
+      db.select({ displayName: users.displayName }).from(users).where(eq(users.id, post.authorId)).get(),
+      post.categoryId
+        ? db.select({ id: categories.id, name: categories.name, slug: categories.slug }).from(categories).where(eq(categories.id, post.categoryId)).get()
+        : Promise.resolve(undefined),
+      db.select({ tagId: postTags.tagId }).from(postTags).where(eq(postTags.postId, post.id)).all(),
+      db.select({ title: posts.title, slug: posts.slug }).from(posts)
+        .where(and(eq(posts.status, "published"), lt(posts.publishedAt, post.publishedAt || post.createdAt)))
+        .orderBy(desc(posts.publishedAt)).limit(1).get(),
+      db.select({ title: posts.title, slug: posts.slug }).from(posts)
+        .where(and(eq(posts.status, "published"), gt(posts.publishedAt, post.publishedAt || post.createdAt)))
+        .orderBy(asc(posts.publishedAt)).limit(1).get(),
+    ]);
 
-    const category = post.categoryId
-      ? await db
-          .select({ id: categories.id, name: categories.name, slug: categories.slug })
-          .from(categories)
-          .where(eq(categories.id, post.categoryId))
-          .get()
-      : undefined;
-
-    const postTagRows = await db
-      .select({ tagId: postTags.tagId })
-      .from(postTags)
-      .where(eq(postTags.postId, post.id))
-      .all();
-
-    const tagList =
-      postTagRows.length > 0
-        ? await db
-            .select()
-            .from(tags)
-            .where(
-              sql`${tags.id} IN (${sql.join(
-                postTagRows.map((r) => sql`${r.tagId}`),
-                sql`, `
-              )})`
-            )
-            .all()
-        : [];
-
-    const prevPost = await db
-      .select({ title: posts.title, slug: posts.slug })
-      .from(posts)
-      .where(
-        and(
-          eq(posts.status, "published"),
-          lt(posts.publishedAt, post.publishedAt || post.createdAt)
-        )
-      )
-      .orderBy(desc(posts.publishedAt))
-      .limit(1)
-      .get();
-
-    const nextPost = await db
-      .select({ title: posts.title, slug: posts.slug })
-      .from(posts)
-      .where(
-        and(
-          eq(posts.status, "published"),
-          gt(posts.publishedAt, post.publishedAt || post.createdAt)
-        )
-      )
-      .orderBy(asc(posts.publishedAt))
-      .limit(1)
-      .get();
+    const tagList = postTagRows.length > 0
+      ? await db.select().from(tags)
+          .where(sql`${tags.id} IN (${sql.join(postTagRows.map((r) => sql`${r.tagId}`), sql`, `)})`)
+          .all()
+      : [];
 
     // Series info
     let seriesInfo = null;
@@ -364,7 +325,7 @@ export default async function publicRoutes(app: FastifyInstance) {
           allowedAttributes: {},
         }),
         authorEmail: request.body.authorEmail,
-        authorUrl: request.body.authorUrl || null,
+        authorUrl: request.body.authorUrl && /^https?:\/\//.test(request.body.authorUrl) ? request.body.authorUrl : null,
         content: cleanContent,
       })
       .returning()

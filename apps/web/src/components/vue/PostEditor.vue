@@ -294,7 +294,7 @@ async function handlePaste(e: ClipboardEvent) {
       const formData = new FormData();
       formData.append("file", file);
       try {
-        const res = await fetch("/api/v1/admin/media", {
+        const res = await fetch("/api/v1/admin/media/upload", {
           method: "POST",
           headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
           body: formData,
