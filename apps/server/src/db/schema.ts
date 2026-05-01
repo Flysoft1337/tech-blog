@@ -29,17 +29,31 @@ export const posts = sqliteTable("posts", {
   contentHtml: text("content_html").notNull(),
   excerpt: text("excerpt"),
   coverImage: text("cover_image"),
-  status: text("status", { enum: ["draft", "published"] })
+  status: text("status", { enum: ["draft", "published", "scheduled"] })
     .notNull()
     .default("draft"),
   pinned: integer("pinned", { mode: "boolean" }).notNull().default(false),
+  viewCount: integer("view_count").notNull().default(0),
   authorId: integer("author_id")
     .notNull()
     .references(() => users.id),
   categoryId: integer("category_id").references(() => categories.id, {
     onDelete: "set null",
   }),
+  seriesId: integer("series_id").references(() => series.id, {
+    onDelete: "set null",
+  }),
+  seriesOrder: integer("series_order"),
   publishedAt: text("published_at"),
+  scheduledAt: text("scheduled_at"),
+  ...timestamps,
+});
+
+export const series = sqliteTable("series", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"),
   ...timestamps,
 });
 

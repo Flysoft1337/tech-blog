@@ -52,6 +52,25 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
   ogImage={post.coverImage}
   ogType="article"
 >
+  <!-- Reading progress bar -->
+  <div class="reading-progress" id="reading-progress"></div>
+
+  {post.series && (
+    <nav class="series-nav">
+      <div class="series-header">
+        <span class="series-label">{t("post.series")}</span>
+        <strong>{post.series.name}</strong>
+      </div>
+      <ol class="series-list">
+        {post.series.posts.map((p: any) => (
+          <li class:list={[{ current: p.id === post.id }]}>
+            {p.id === post.id ? <span>{p.title}</span> : <a href={`/post/${p.slug}`}>{p.title}</a>}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  )}
+
   <div class="post-page">
     <article class="post-content">
       <header class="post-header">
@@ -65,6 +84,7 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
           {post.author && <span>{post.author.displayName}</span>}
           {date && <time>{date}</time>}
           <span>{t("post.minRead", { n: readingTime })}</span>
+          <span>{t("post.views", { n: post.viewCount || 0 })}</span>
         </div>
         {post.tags?.length > 0 && (
           <div class="post-tags">
@@ -105,6 +125,22 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
       </div>
     </nav>
   )}
+  {post.relatedPosts?.length > 0 && (
+    <section class="related-section">
+      <h2>{t("post.relatedPosts")}</h2>
+      <div class="related-grid">
+        {post.relatedPosts.map((rp: any) => (
+          <a href={`/post/${rp.slug}`} class="related-card">
+            {rp.coverImage && <img src={rp.coverImage} alt={rp.title} loading="lazy" />}
+            <div class="related-info">
+              <h3>{rp.title}</h3>
+              {rp.excerpt && <p>{rp.excerpt}</p>}
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
   <section class="comments-section">
     <h2>{t("post.comments")}</h2>
     <CommentForm client:visible slug={slug!} />
@@ -132,7 +168,62 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
   });
 </script>
 
+<script>
+  (function() {
+    const bar = document.getElementById("reading-progress");
+    if (!bar) return;
+    window.addEventListener("scroll", function() {
+      const h = document.documentElement.scrollHeight - window.innerHeight;
+      const pct = h > 0 ? Math.min(100, (window.scrollY / h) * 100) : 0;
+      bar.style.width = pct + "%";
+    });
+  })();
+</script>
+
 <style>
+  .reading-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    width: 0%;
+    background: var(--color-primary);
+    z-index: 200;
+    transition: width 0.1s linear;
+  }
+  .series-nav {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 2rem;
+  }
+  .series-header {
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+  }
+  .series-label {
+    color: var(--color-primary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+  .series-list {
+    padding-left: 1.25rem;
+    font-size: 0.9rem;
+    line-height: 1.8;
+  }
+  .series-list li.current {
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+  .series-list a {
+    color: var(--color-text-secondary);
+  }
+  .series-list a:hover {
+    color: var(--color-primary);
+  }
   .post-page {
     display: flex;
     gap: 3rem;
@@ -231,5 +322,52 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
     .post-sidebar {
       display: none;
     }
+  }
+  .related-section {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--color-border);
+  }
+  .related-section h2 {
+    margin-bottom: 1.25rem;
+  }
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  .related-card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+  .related-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .related-card img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+  }
+  .related-info {
+    padding: 0.75rem;
+  }
+  .related-info h3 {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    margin-bottom: 0.25rem;
+    color: var(--color-text);
+  }
+  .related-info p {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 </style>

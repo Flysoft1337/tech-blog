@@ -120,6 +120,9 @@ export default async function postsRoutes(app: FastifyInstance) {
       pinned?: boolean;
       categoryId?: number;
       tagIds?: number[];
+      seriesId?: number;
+      seriesOrder?: number;
+      scheduledAt?: string;
     };
   }>("/", {
     schema: {
@@ -132,10 +135,13 @@ export default async function postsRoutes(app: FastifyInstance) {
           content: { type: "string", minLength: 1 },
           excerpt: { type: "string", maxLength: 500 },
           coverImage: { type: "string", maxLength: 500 },
-          status: { type: "string", enum: ["draft", "published"] },
+          status: { type: "string", enum: ["draft", "published", "scheduled"] },
           pinned: { type: "boolean" },
           categoryId: { type: "integer" },
           tagIds: { type: "array", items: { type: "integer" } },
+          seriesId: { type: "integer" },
+          seriesOrder: { type: "integer" },
+          scheduledAt: { type: "string" },
         },
       },
     },
@@ -181,6 +187,9 @@ export default async function postsRoutes(app: FastifyInstance) {
       pinned?: boolean;
       categoryId?: number;
       tagIds?: number[];
+      seriesId?: number;
+      seriesOrder?: number;
+      scheduledAt?: string;
     };
   }>("/:id", async (request, reply) => {
     const id = Number(request.params.id);

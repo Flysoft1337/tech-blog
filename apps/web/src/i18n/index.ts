@@ -44,6 +44,9 @@ const translations: Record<Locale, Record<string, string>> = {
     "post.pinned": "置顶",
     "post.toc": "目录",
     "post.readMore": "阅读全文",
+    "post.views": "{n} 次阅读",
+    "post.relatedPosts": "相关文章",
+    "post.series": "系列文章",
 
     // Comment
     "comment.noComments": "暂无评论，来做第一个留言的人！",
@@ -115,6 +118,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "admin.media": "媒体",
     "admin.users": "用户",
     "admin.settings": "设置",
+    "admin.series": "系列",
     "admin.viewSite": "查看站点",
     "admin.logout": "退出登录",
     "admin.toggleSidebar": "切换侧边栏",
@@ -203,6 +207,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "editor.savePost": "保存文章",
     "editor.selectImage": "选择图片",
     "editor.words": "{count} 字",
+    "editor.scheduled": "定时发布",
+    "editor.scheduledAt": "发布时间",
+    "editor.seriesLabel": "系列",
+    "editor.seriesOrder": "系列排序",
 
     // Comment manager
     "admin.pending": "待审核",
@@ -303,6 +311,9 @@ const translations: Record<Locale, Record<string, string>> = {
     "post.pinned": "Pinned",
     "post.toc": "Table of Contents",
     "post.readMore": "Read more",
+    "post.views": "{n} views",
+    "post.relatedPosts": "Related Posts",
+    "post.series": "Series",
 
     // Comment
     "comment.noComments": "No comments yet. Be the first!",
@@ -374,6 +385,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "admin.media": "Media",
     "admin.users": "Users",
     "admin.settings": "Settings",
+    "admin.series": "Series",
     "admin.viewSite": "View Site",
     "admin.logout": "Logout",
     "admin.toggleSidebar": "Toggle sidebar",
@@ -462,6 +474,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "editor.savePost": "Save post",
     "editor.selectImage": "Select Image",
     "editor.words": "{count} words",
+    "editor.scheduled": "Scheduled",
+    "editor.scheduledAt": "Publish At",
+    "editor.seriesLabel": "Series",
+    "editor.seriesOrder": "Series Order",
 
     // Comment manager
     "admin.pending": "Pending",

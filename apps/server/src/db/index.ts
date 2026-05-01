@@ -54,9 +54,22 @@ export async function initDatabase() {
       cover_image TEXT,
       status TEXT NOT NULL DEFAULT 'draft',
       pinned INTEGER NOT NULL DEFAULT 0,
+      view_count INTEGER NOT NULL DEFAULT 0,
       author_id INTEGER NOT NULL REFERENCES users(id),
       category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+      series_id INTEGER REFERENCES series(id) ON DELETE SET NULL,
+      series_order INTEGER,
       published_at TEXT,
+      scheduled_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS series (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      slug TEXT NOT NULL UNIQUE,
+      description TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -97,6 +110,17 @@ export async function initDatabase() {
   `);
 
   await seedDefaults();
+
+  // Migrations for existing databases
+  const migrations = [
+    "ALTER TABLE posts ADD COLUMN view_count INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE posts ADD COLUMN series_id INTEGER REFERENCES series(id) ON DELETE SET NULL",
+    "ALTER TABLE posts ADD COLUMN series_order INTEGER",
+    "ALTER TABLE posts ADD COLUMN scheduled_at TEXT",
+  ];
+  for (const m of migrations) {
+    try { await client.execute(m); } catch {}
+  }
 }
 
 async function seedDefaults() {

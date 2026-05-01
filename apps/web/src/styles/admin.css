@@ -132,6 +132,11 @@
   color: #991b1b;
 }
 
+.badge-scheduled {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
 .badge-rejected {
   background: #fee2e2;
   color: #991b1b;
@@ -153,6 +158,11 @@
 [data-theme="dark"] .badge-rejected {
   background: #450a0a;
   color: #f87171;
+}
+
+[data-theme="dark"] .badge-scheduled {
+  background: #172554;
+  color: #60a5fa;
 }
 
 /* Dashboard stats */

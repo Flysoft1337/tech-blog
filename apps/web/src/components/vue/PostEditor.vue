@@ -47,7 +47,12 @@
               <select v-model="form.status">
                 <option value="draft">{{ t("editor.draft") }}</option>
                 <option value="published">{{ t("editor.publishedStatus") }}</option>
+                <option value="scheduled">{{ t("editor.scheduled") }}</option>
               </select>
+            </div>
+            <div v-if="form.status === 'scheduled'" class="form-group">
+              <label>{{ t("editor.scheduledAt") }}</label>
+              <input v-model="form.scheduledAt" type="datetime-local" />
             </div>
             <div class="form-group">
               <label>
@@ -60,6 +65,17 @@
                 <option :value="undefined">{{ t("editor.none") }}</option>
                 <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
               </select>
+            </div>
+            <div class="form-group">
+              <label>{{ t("editor.seriesLabel") }}</label>
+              <select v-model="form.seriesId">
+                <option :value="undefined">{{ t("editor.none") }}</option>
+                <option v-for="s in seriesList" :key="s.id" :value="s.id">{{ s.name }}</option>
+              </select>
+            </div>
+            <div v-if="form.seriesId" class="form-group">
+              <label>{{ t("editor.seriesOrder") }}</label>
+              <input v-model.number="form.seriesOrder" type="number" min="1" />
             </div>
             <div class="form-group">
               <label>{{ t("editor.tagsLabel") }}</label>
@@ -127,10 +143,13 @@ const form = ref({
   content: "",
   excerpt: "",
   coverImage: "",
-  status: "draft" as "draft" | "published",
+  status: "draft" as "draft" | "published" | "scheduled",
   pinned: false,
   categoryId: undefined as number | undefined,
   tagIds: [] as number[],
+  seriesId: undefined as number | undefined,
+  seriesOrder: undefined as number | undefined,
+  scheduledAt: "",
 });
 
 const savedSnapshot = ref("");
@@ -149,6 +168,7 @@ function handleBeforeUnload(e: BeforeUnloadEvent) {
 
 const categories = ref<any[]>([]);
 const tags = ref<any[]>([]);
+const seriesList = ref<any[]>([]);
 const loading = ref(false);
 const message = ref("");
 const success = ref(false);
@@ -322,15 +342,18 @@ function getHeaders() {
 async function loadData() {
   const headers = getHeaders();
 
-  const [catRes, tagRes] = await Promise.all([
+  const [catRes, tagRes, seriesRes] = await Promise.all([
     fetch("/api/v1/admin/categories", { headers }),
     fetch("/api/v1/admin/tags", { headers }),
+    fetch("/api/v1/admin/series", { headers }),
   ]);
 
   const catData = await catRes.json();
   const tagData = await tagRes.json();
+  const seriesData = await seriesRes.json();
   if (catData.success) categories.value = catData.data;
   if (tagData.success) tags.value = tagData.data;
+  if (seriesData.success) seriesList.value = seriesData.data;
 
   if (props.postId) {
     const res = await fetch(`/api/v1/admin/posts/${props.postId}`, { headers });
@@ -347,6 +370,9 @@ async function loadData() {
         pinned: p.pinned,
         categoryId: p.categoryId || undefined,
         tagIds: (p.tags || []).map((tag: any) => tag.id),
+        seriesId: p.seriesId || undefined,
+        seriesOrder: p.seriesOrder || undefined,
+        scheduledAt: p.scheduledAt ? p.scheduledAt.replace(" ", "T").substring(0, 16) : "",
       };
     }
   }

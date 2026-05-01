@@ -8,6 +8,7 @@ import {
   comments,
   users,
   settings,
+  series,
 } from "../db/schema.js";
 import { eq, desc, asc, and, sql, like, or, gt, lt } from "drizzle-orm";
 import sanitizeHtml from "sanitize-html";
@@ -109,6 +110,9 @@ export default async function publicRoutes(app: FastifyInstance) {
       return reply.status(404).send({ success: false, error: "Post not found" });
     }
 
+    // Increment view count
+    await db.update(posts).set({ viewCount: sql`view_count + 1` }).where(eq(posts.id, post.id)).run();
+
     const author = await db
       .select({ displayName: users.displayName })
       .from(users)
@@ -169,15 +173,66 @@ export default async function publicRoutes(app: FastifyInstance) {
       .limit(1)
       .get();
 
+    // Series info
+    let seriesInfo = null;
+    if (post.seriesId) {
+      const s = await db.select().from(series).where(eq(series.id, post.seriesId)).get();
+      if (s) {
+        const seriesPosts = await db
+          .select({ id: posts.id, title: posts.title, slug: posts.slug, seriesOrder: posts.seriesOrder })
+          .from(posts)
+          .where(and(eq(posts.seriesId, s.id), eq(posts.status, "published")))
+          .orderBy(asc(posts.seriesOrder))
+          .all();
+        seriesInfo = { ...s, posts: seriesPosts };
+      }
+    }
+
+    // Related posts (shared tags or same category)
+    const tagIds = postTagRows.map(r => r.tagId);
+    let relatedPosts: any[] = [];
+    if (tagIds.length > 0 || post.categoryId) {
+      const relatedConditions = [];
+      if (tagIds.length > 0) {
+        relatedConditions.push(
+          sql`${posts.id} IN (SELECT post_id FROM post_tags WHERE tag_id IN (${sql.join(tagIds.map(id => sql`${id}`), sql`, `)}))`
+        );
+      }
+      if (post.categoryId) {
+        relatedConditions.push(eq(posts.categoryId, post.categoryId));
+      }
+      relatedPosts = await db
+        .select({
+          id: posts.id,
+          title: posts.title,
+          slug: posts.slug,
+          excerpt: posts.excerpt,
+          coverImage: posts.coverImage,
+          publishedAt: posts.publishedAt,
+        })
+        .from(posts)
+        .where(and(
+          eq(posts.status, "published"),
+          sql`${posts.id} != ${post.id}`,
+          or(...relatedConditions),
+        ))
+        .orderBy(desc(posts.publishedAt))
+        .limit(4)
+        .all();
+    }
+
     return {
       success: true,
       data: {
         ...post,
+        viewCount: (post.viewCount || 0) + 1,
         author: author ? { displayName: author.displayName } : undefined,
         category,
         tags: tagList,
         prevPost: prevPost || null,
         nextPost: nextPost || null,
+        series: seriesInfo,
+        relatedPosts,
       },
     };
   });
