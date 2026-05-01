@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { db } from "../db/index.js";
 import { posts, postTags, categories, tags, users } from "../db/schema.js";
-import { eq, sql, desc, and } from "drizzle-orm";
+import { eq, sql, desc, and, like, or } from "drizzle-orm";
 import { renderMarkdown } from "../services/markdown.js";
 
 export default async function postsRoutes(app: FastifyInstance) {
@@ -9,7 +9,7 @@ export default async function postsRoutes(app: FastifyInstance) {
 
   // List posts (admin)
   app.get<{
-    Querystring: { page?: string; pageSize?: string; status?: string };
+    Querystring: { page?: string; pageSize?: string; status?: string; q?: string };
   }>("/", async (request) => {
     const page = Number(request.query.page) || 1;
     const pageSize = Number(request.query.pageSize) || 20;
@@ -18,6 +18,12 @@ export default async function postsRoutes(app: FastifyInstance) {
     const conditions = [];
     if (request.query.status) {
       conditions.push(eq(posts.status, request.query.status as "draft" | "published"));
+    }
+    if (request.query.q) {
+      const search = `%${request.query.q}%`;
+      conditions.push(
+        or(like(posts.title, search), like(posts.content, search))!
+      );
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined;

@@ -19,6 +19,7 @@ const { title = "Tech Blog", description = "A personal tech blog" } = Astro.prop
     <meta name="description" content={description} />
     <title>{title}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate" type="application/rss+xml" title={title} href="/rss.xml" />
   </head>
   <body>
     <Header />

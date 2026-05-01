@@ -1,0 +1,16 @@
+# Replace example.com with your domain
+example.com {
+	# API requests → Fastify
+	handle /api/* {
+		reverse_proxy 127.0.0.1:3000
+	}
+
+	handle /uploads/* {
+		reverse_proxy 127.0.0.1:3000
+	}
+
+	# Everything else → Astro SSR
+	handle {
+		reverse_proxy 127.0.0.1:4321
+	}
+}

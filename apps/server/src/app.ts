@@ -47,23 +47,7 @@ export async function buildApp() {
   await app.register(fastifyStatic, {
     root: uploadDir,
     prefix: "/uploads/",
-    decorateReply: false,
   });
-
-  // Serve Astro static files (production)
-  const publicDir = resolve("./public");
-  if (existsSync(publicDir)) {
-    await app.register(fastifyStatic, {
-      root: publicDir,
-      prefix: "/",
-      decorateReply: true,
-      wildcard: false,
-    });
-
-    app.setNotFoundHandler((_request, reply) => {
-      return reply.sendFile("index.html");
-    });
-  }
 
   return app;
 }

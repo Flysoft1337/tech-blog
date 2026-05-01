@@ -1,6 +1,6 @@
 ---
 import AdminLayout from "../../../layouts/AdminLayout.astro";
-import AdminTable from "../../../components/vue/AdminTable.vue";
+import PostList from "../../../components/vue/PostList.vue";
 ---
 
 <AdminLayout title="Posts">
@@ -8,14 +8,5 @@ import AdminTable from "../../../components/vue/AdminTable.vue";
     <h1>Posts</h1>
     <a href="/admin/posts/new" class="btn btn-primary">New Post</a>
   </div>
-  <AdminTable
-    client:load
-    endpoint="/api/v1/admin/posts"
-    columns={[
-      { key: "title", label: "Title" },
-      { key: "status", label: "Status", type: "badge" },
-      { key: "createdAt", label: "Created", type: "date" },
-    ]}
-    editPath="/admin/posts"
-  />
+  <PostList client:load />
 </AdminLayout>
