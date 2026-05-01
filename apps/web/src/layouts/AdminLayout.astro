@@ -10,14 +10,14 @@ const { title = "Admin" } = Astro.props;
 const currentPath = Astro.url.pathname;
 
 const navItems = [
-  { href: "/admin", label: "Dashboard" },
-  { href: "/admin/posts", label: "Posts" },
-  { href: "/admin/categories", label: "Categories" },
-  { href: "/admin/tags", label: "Tags" },
-  { href: "/admin/comments", label: "Comments" },
-  { href: "/admin/media", label: "Media" },
-  { href: "/admin/users", label: "Users" },
-  { href: "/admin/settings", label: "Settings" },
+  { href: "/admin", label: "Dashboard", icon: "📊" },
+  { href: "/admin/posts", label: "Posts", icon: "📝" },
+  { href: "/admin/categories", label: "Categories", icon: "📂" },
+  { href: "/admin/tags", label: "Tags", icon: "🏷" },
+  { href: "/admin/comments", label: "Comments", icon: "💬" },
+  { href: "/admin/media", label: "Media", icon: "🖼" },
+  { href: "/admin/users", label: "Users", icon: "👥" },
+  { href: "/admin/settings", label: "Settings", icon: "⚙" },
 ];
 ---
 
@@ -39,11 +39,18 @@ const navItems = [
               href={item.href}
               class:list={[{ active: currentPath === item.href || (item.href !== "/admin" && currentPath.startsWith(item.href)) }]}
             >
+              <span class="nav-icon">{item.icon}</span>
               {item.label}
             </a>
           ))}
-          <a href="/" style="margin-top:2rem; border-top:1px solid rgba(255,255,255,0.1); padding-top:0.75rem;">
+          <div class="nav-divider"></div>
+          <a href="/">
+            <span class="nav-icon">🌐</span>
             View Site
+          </a>
+          <a href="#" id="logout-btn" class="logout-link">
+            <span class="nav-icon">🚪</span>
+            Logout
           </a>
         </nav>
       </aside>
@@ -51,11 +58,112 @@ const navItems = [
         <slot />
       </main>
     </div>
-    <script>
-      const token = localStorage.getItem("accessToken");
-      if (!token && !window.location.pathname.includes("/admin/login")) {
-        window.location.href = "/admin/login";
-      }
+    <div id="toast-container"></div>
+    <script is:inline>
+      (function() {
+        const token = localStorage.getItem("accessToken");
+        if (!token && !window.location.pathname.includes("/admin/login")) {
+          window.location.href = "/admin/login";
+        }
+
+        // Logout
+        document.getElementById("logout-btn")?.addEventListener("click", function(e) {
+          e.preventDefault();
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          window.location.href = "/admin/login";
+        });
+
+        // Auto-refresh token
+        async function refreshToken() {
+          const rt = localStorage.getItem("refreshToken");
+          if (!rt) return;
+          try {
+            const res = await fetch("/api/v1/auth/refresh", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ refreshToken: rt }),
+            });
+            const data = await res.json();
+            if (data.success) {
+              localStorage.setItem("accessToken", data.data.accessToken);
+              localStorage.setItem("refreshToken", data.data.refreshToken);
+            } else {
+              localStorage.removeItem("accessToken");
+              localStorage.removeItem("refreshToken");
+              window.location.href = "/admin/login";
+            }
+          } catch {}
+        }
+
+        // Refresh every 10 minutes
+        if (token) {
+          setInterval(refreshToken, 10 * 60 * 1000);
+        }
+
+        // Toast helper
+        window.showToast = function(message, type) {
+          type = type || "success";
+          const container = document.getElementById("toast-container");
+          if (!container) return;
+          const toast = document.createElement("div");
+          toast.className = "toast toast-" + type;
+          toast.textContent = message;
+          container.appendChild(toast);
+          setTimeout(function() { toast.classList.add("toast-show"); }, 10);
+          setTimeout(function() {
+            toast.classList.remove("toast-show");
+            setTimeout(function() { toast.remove(); }, 300);
+          }, 3000);
+        };
+      })();
     </script>
   </body>
 </html>
+
+<style>
+  .nav-icon {
+    display: inline-block;
+    width: 1.25rem;
+    text-align: center;
+    font-size: 0.9rem;
+  }
+  .nav-divider {
+    margin: 1rem 0 0.5rem;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  .logout-link {
+    color: rgba(255,255,255,0.5) !important;
+  }
+  .logout-link:hover {
+    color: #f87171 !important;
+    background: rgba(248,113,113,0.1) !important;
+  }
+  #toast-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  :global(.toast) {
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    color: white;
+    font-size: 0.875rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+  }
+  :global(.toast-show) {
+    transform: translateX(0);
+  }
+  :global(.toast-success) {
+    background: #059669;
+  }
+  :global(.toast-error) {
+    background: #dc2626;
+  }
+</style>

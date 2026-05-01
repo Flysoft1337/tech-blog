@@ -11,6 +11,7 @@ import tagsRoutes from "./routes/tags.js";
 import commentsRoutes from "./routes/comments.js";
 import mediaRoutes from "./routes/media.js";
 import settingsRoutes from "./routes/settings.js";
+import usersRoutes from "./routes/users.js";
 import publicRoutes from "./routes/public.js";
 
 export async function buildApp() {
@@ -38,6 +39,7 @@ export async function buildApp() {
   await app.register(commentsRoutes, { prefix: "/api/v1/admin/comments" });
   await app.register(mediaRoutes, { prefix: "/api/v1/admin/media" });
   await app.register(settingsRoutes, { prefix: "/api/v1/admin/settings" });
+  await app.register(usersRoutes, { prefix: "/api/v1/admin/users" });
 
   // Serve uploaded files
   const uploadDir = resolve(process.env.UPLOAD_DIR || "./data/uploads");
