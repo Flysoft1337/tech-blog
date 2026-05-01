@@ -6,9 +6,18 @@ import Footer from "../components/blog/Footer.astro";
 interface Props {
   title?: string;
   description?: string;
+  ogImage?: string;
+  ogType?: string;
 }
 
-const { title = "Tech Blog", description = "A personal tech blog" } = Astro.props;
+const {
+  title = "Tech Blog",
+  description = "A personal tech blog",
+  ogImage,
+  ogType = "website",
+} = Astro.props;
+
+const canonicalUrl = Astro.url.href;
 ---
 
 <!doctype html>
@@ -19,7 +28,18 @@ const { title = "Tech Blog", description = "A personal tech blog" } = Astro.prop
     <meta name="description" content={description} />
     <title>{title}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={canonicalUrl} />
     <link rel="alternate" type="application/rss+xml" title={title} href="/rss.xml" />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={canonicalUrl} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
   </head>
   <body>
     <Header />
@@ -27,5 +47,51 @@ const { title = "Tech Blog", description = "A personal tech blog" } = Astro.prop
       <slot />
     </main>
     <Footer />
+    <button id="back-to-top" class="back-to-top" aria-label="Back to top">&#8593;</button>
   </body>
 </html>
+
+<script is:inline>
+  (function() {
+    const btn = document.getElementById("back-to-top");
+    if (!btn) return;
+    window.addEventListener("scroll", function() {
+      btn.classList.toggle("visible", window.scrollY > 400);
+    });
+    btn.addEventListener("click", function() {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  })();
+</script>
+
+<style>
+  .back-to-top {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    background: var(--color-bg);
+    color: var(--color-text-secondary);
+    font-size: 1.1rem;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(1rem);
+    transition: opacity 0.3s, transform 0.3s, background 0.2s;
+    pointer-events: none;
+    z-index: 50;
+    box-shadow: var(--shadow);
+  }
+  .back-to-top.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  .back-to-top:hover {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+  }
+</style>

@@ -29,8 +29,26 @@ export default async function postsRoutes(app: FastifyInstance) {
     const where = conditions.length > 0 ? and(...conditions) : undefined;
 
     const items = await db
-      .select()
+      .select({
+        id: posts.id,
+        title: posts.title,
+        slug: posts.slug,
+        excerpt: posts.excerpt,
+        coverImage: posts.coverImage,
+        content: posts.content,
+        contentHtml: posts.contentHtml,
+        status: posts.status,
+        pinned: posts.pinned,
+        publishedAt: posts.publishedAt,
+        createdAt: posts.createdAt,
+        authorId: posts.authorId,
+        categoryId: posts.categoryId,
+        categoryName: categories.name,
+        authorName: users.displayName,
+      })
       .from(posts)
+      .leftJoin(categories, eq(posts.categoryId, categories.id))
+      .leftJoin(users, eq(posts.authorId, users.id))
       .where(where)
       .orderBy(desc(posts.createdAt))
       .limit(pageSize)
@@ -103,7 +121,25 @@ export default async function postsRoutes(app: FastifyInstance) {
       categoryId?: number;
       tagIds?: number[];
     };
-  }>("/", async (request) => {
+  }>("/", {
+    schema: {
+      body: {
+        type: "object",
+        required: ["title", "slug", "content"],
+        properties: {
+          title: { type: "string", minLength: 1, maxLength: 200 },
+          slug: { type: "string", minLength: 1, maxLength: 200 },
+          content: { type: "string", minLength: 1 },
+          excerpt: { type: "string", maxLength: 500 },
+          coverImage: { type: "string", maxLength: 500 },
+          status: { type: "string", enum: ["draft", "published"] },
+          pinned: { type: "boolean" },
+          categoryId: { type: "integer" },
+          tagIds: { type: "array", items: { type: "integer" } },
+        },
+      },
+    },
+  }, async (request) => {
     const { tagIds, ...data } = request.body;
     const contentHtml = await renderMarkdown(data.content);
 
@@ -178,6 +214,12 @@ export default async function postsRoutes(app: FastifyInstance) {
     }
 
     return { success: true, data: result };
+  });
+
+  // Preview markdown
+  app.post<{ Body: { content: string } }>("/preview", async (request) => {
+    const html = await renderMarkdown(request.body.content || "");
+    return { success: true, data: { html } };
   });
 
   // Delete post

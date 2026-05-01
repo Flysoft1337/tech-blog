@@ -9,7 +9,7 @@ import {
   users,
   settings,
 } from "../db/schema.js";
-import { eq, desc, and, sql, like, or } from "drizzle-orm";
+import { eq, desc, asc, and, sql, like, or, gt, lt } from "drizzle-orm";
 import sanitizeHtml from "sanitize-html";
 
 export default async function publicRoutes(app: FastifyInstance) {
@@ -32,6 +32,26 @@ export default async function publicRoutes(app: FastifyInstance) {
       conditions.push(
         or(like(posts.title, search), like(posts.content, search))!
       );
+    }
+    if (request.query.category) {
+      const cat = await db
+        .select({ id: categories.id })
+        .from(categories)
+        .where(eq(categories.slug, request.query.category))
+        .get();
+      if (cat) conditions.push(eq(posts.categoryId, cat.id));
+    }
+    if (request.query.tag) {
+      const tagRow = await db
+        .select({ id: tags.id })
+        .from(tags)
+        .where(eq(tags.slug, request.query.tag))
+        .get();
+      if (tagRow) {
+        conditions.push(
+          sql`${posts.id} IN (SELECT post_id FROM post_tags WHERE tag_id = ${tagRow.id})`
+        );
+      }
     }
 
     let query = db
@@ -123,6 +143,32 @@ export default async function publicRoutes(app: FastifyInstance) {
             .all()
         : [];
 
+    const prevPost = await db
+      .select({ title: posts.title, slug: posts.slug })
+      .from(posts)
+      .where(
+        and(
+          eq(posts.status, "published"),
+          lt(posts.publishedAt, post.publishedAt || post.createdAt)
+        )
+      )
+      .orderBy(desc(posts.publishedAt))
+      .limit(1)
+      .get();
+
+    const nextPost = await db
+      .select({ title: posts.title, slug: posts.slug })
+      .from(posts)
+      .where(
+        and(
+          eq(posts.status, "published"),
+          gt(posts.publishedAt, post.publishedAt || post.createdAt)
+        )
+      )
+      .orderBy(asc(posts.publishedAt))
+      .limit(1)
+      .get();
+
     return {
       success: true,
       data: {
@@ -130,6 +176,8 @@ export default async function publicRoutes(app: FastifyInstance) {
         author: author ? { displayName: author.displayName } : undefined,
         category,
         tags: tagList,
+        prevPost: prevPost || null,
+        nextPost: nextPost || null,
       },
     };
   });
@@ -211,7 +259,21 @@ export default async function publicRoutes(app: FastifyInstance) {
       content: string;
       parentId?: number;
     };
-  }>("/posts/:slug/comments", async (request, reply) => {
+  }>("/posts/:slug/comments", {
+    schema: {
+      body: {
+        type: "object",
+        required: ["authorName", "authorEmail", "content"],
+        properties: {
+          authorName: { type: "string", minLength: 1, maxLength: 100 },
+          authorEmail: { type: "string", format: "email" },
+          authorUrl: { type: "string", maxLength: 500 },
+          content: { type: "string", minLength: 1, maxLength: 5000 },
+          parentId: { type: "integer" },
+        },
+      },
+    },
+  }, async (request, reply) => {
     const post = await db
       .select({ id: posts.id })
       .from(posts)

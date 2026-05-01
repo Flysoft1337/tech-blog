@@ -6,6 +6,14 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
   <div class="admin-header">
     <h1>Dashboard</h1>
   </div>
+  <div id="pending-alert" style="display:none" class="admin-card" >
+    <div style="display:flex; align-items:center; justify-content:space-between">
+      <span style="color:#92400e; font-weight:500">
+        <span id="pending-count">0</span> comments pending moderation
+      </span>
+      <a href="/admin/comments" class="btn" style="font-size:0.8rem; padding:0.3rem 0.75rem">Review</a>
+    </div>
+  </div>
   <div class="stats-grid" id="stats">
     <div class="stat-card">
       <div class="label">Posts</div>
@@ -41,23 +49,33 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
   </div>
 </AdminLayout>
 
+<style>
+  #pending-alert {
+    background: #fffbeb;
+    border: 1px solid #fbbf24;
+    margin-bottom: 1rem;
+  }
+</style>
+
 <script>
   async function loadDashboard() {
     const token = localStorage.getItem("accessToken");
     const headers = { Authorization: `Bearer ${token}` };
 
     try {
-      const [postsRes, commentsRes, catsRes, mediaRes] = await Promise.all([
+      const [postsRes, commentsRes, catsRes, mediaRes, pendingRes] = await Promise.all([
         fetch("/api/v1/admin/posts?pageSize=5", { headers }),
         fetch("/api/v1/admin/comments?pageSize=1", { headers }),
         fetch("/api/v1/admin/categories", { headers }),
         fetch("/api/v1/admin/media?pageSize=1", { headers }),
+        fetch("/api/v1/admin/comments?status=pending&pageSize=1", { headers }),
       ]);
 
       const posts = await postsRes.json();
       const comments = await commentsRes.json();
       const cats = await catsRes.json();
       const media = await mediaRes.json();
+      const pending = await pendingRes.json();
 
       document.getElementById("stat-posts")!.textContent =
         posts.data?.total?.toString() || "0";
@@ -67,6 +85,13 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
         cats.data?.length?.toString() || "0";
       document.getElementById("stat-media")!.textContent =
         media.data?.total?.toString() || "0";
+
+      const pendingCount = pending.data?.total || 0;
+      if (pendingCount > 0) {
+        const alert = document.getElementById("pending-alert")!;
+        alert.style.display = "block";
+        document.getElementById("pending-count")!.textContent = pendingCount.toString();
+      }
 
       const tbody = document.getElementById("recent-posts")!;
       if (posts.data?.items?.length) {

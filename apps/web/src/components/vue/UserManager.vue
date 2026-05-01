@@ -133,9 +133,10 @@ async function createUser() {
     const data = await res.json();
     if (data.success) {
       newUser.value = { email: "", displayName: "", password: "", role: "editor" };
+      if (typeof window.showToast === "function") window.showToast("User created!");
       loadData();
     } else {
-      alert(data.error || "Failed to create user");
+      if (typeof window.showToast === "function") window.showToast(data.error || "Failed to create user", "error");
     }
   } catch {}
 }
@@ -161,9 +162,10 @@ async function saveEdit() {
     const data = await res.json();
     if (data.success) {
       editUser.value = null;
+      if (typeof window.showToast === "function") window.showToast("User updated!");
       loadData();
     } else {
-      alert(data.error || "Failed to update user");
+      if (typeof window.showToast === "function") window.showToast(data.error || "Failed to update user", "error");
     }
   } catch {}
 }
@@ -177,9 +179,10 @@ async function deleteUser(id: number) {
     });
     const data = await res.json();
     if (data.success) {
+      if (typeof window.showToast === "function") window.showToast("User deleted!");
       loadData();
     } else {
-      alert(data.error || "Failed to delete user");
+      if (typeof window.showToast === "function") window.showToast(data.error || "Failed to delete user", "error");
     }
   } catch {}
 }

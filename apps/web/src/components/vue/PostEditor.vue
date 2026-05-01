@@ -12,8 +12,15 @@
             <input v-model="form.slug" required />
           </div>
           <div class="form-group">
-            <label>Content (Markdown)</label>
-            <textarea v-model="form.content" rows="20" style="font-family:monospace; font-size:0.9rem"></textarea>
+            <div class="content-header">
+              <label>Content (Markdown)</label>
+              <button type="button" class="btn preview-toggle" @click="showPreview = !showPreview">
+                {{ showPreview ? "Edit" : "Preview" }}
+              </button>
+            </div>
+            <div v-if="showPreview" class="preview-pane prose" v-html="previewHtml"></div>
+            <textarea v-else v-model="form.content" rows="20" style="font-family:monospace; font-size:0.9rem"
+              @keydown.tab.prevent="insertTab"></textarea>
           </div>
           <div class="form-group">
             <label>Excerpt</label>
@@ -61,6 +68,15 @@
               {{ message }}
             </p>
           </div>
+          <div class="admin-card" style="margin-top:1rem">
+            <div class="form-group" style="margin-bottom:0">
+              <label style="margin-bottom:0.5rem">Keyboard Shortcuts</label>
+              <ul class="shortcuts-list">
+                <li><kbd>Tab</kbd> Insert indent</li>
+                <li><kbd>Ctrl+S</kbd> Save post</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </form>
@@ -68,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 
 const props = defineProps<{ postId?: string }>();
 
@@ -89,6 +105,52 @@ const tags = ref<any[]>([]);
 const loading = ref(false);
 const message = ref("");
 const success = ref(false);
+const showPreview = ref(false);
+const previewHtml = ref("");
+
+let previewTimer: ReturnType<typeof setTimeout> | null = null;
+
+watch(() => form.value.content, () => {
+  if (showPreview.value) renderPreview();
+});
+
+watch(showPreview, (val) => {
+  if (val) renderPreview();
+});
+
+async function renderPreview() {
+  if (previewTimer) clearTimeout(previewTimer);
+  previewTimer = setTimeout(async () => {
+    try {
+      const res = await fetch("/api/v1/admin/preview", {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({ content: form.value.content }),
+      });
+      const data = await res.json();
+      if (data.success) previewHtml.value = data.data.html;
+    } catch {
+      previewHtml.value = "<p style='color:#dc2626'>Preview failed</p>";
+    }
+  }, 300);
+}
+
+function insertTab(e: KeyboardEvent) {
+  const target = e.target as HTMLTextAreaElement;
+  const start = target.selectionStart;
+  const end = target.selectionEnd;
+  form.value.content = form.value.content.substring(0, start) + "  " + form.value.content.substring(end);
+  requestAnimationFrame(() => {
+    target.selectionStart = target.selectionEnd = start + 2;
+  });
+}
+
+function handleKeydown(e: KeyboardEvent) {
+  if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+    e.preventDefault();
+    savePost();
+  }
+}
 
 function generateSlug() {
   if (!props.postId) {
@@ -160,6 +222,7 @@ async function savePost() {
     if (data.success) {
       success.value = true;
       message.value = "Saved!";
+      if (typeof window.showToast === "function") window.showToast("Post saved!");
       if (!props.postId && data.data?.id) {
         window.location.href = `/admin/posts/${data.data.id}`;
       }
@@ -175,7 +238,14 @@ async function savePost() {
   }
 }
 
-onMounted(loadData);
+onMounted(() => {
+  loadData();
+  document.addEventListener("keydown", handleKeydown);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("keydown", handleKeydown);
+});
 </script>
 
 <style scoped>
@@ -193,6 +263,27 @@ onMounted(loadData);
 .form-group {
   margin-bottom: 1rem;
 }
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.375rem;
+}
+.content-header label {
+  margin-bottom: 0;
+}
+.preview-toggle {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+}
+.preview-pane {
+  min-height: 400px;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  overflow-y: auto;
+}
 .tag-select {
   display: flex;
   flex-wrap: wrap;
@@ -207,6 +298,25 @@ onMounted(loadData);
 }
 .success-msg {
   color: #059669;
+}
+.shortcuts-list {
+  list-style: none;
+  padding: 0;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+.shortcuts-list li {
+  padding: 0.2rem 0;
+}
+.shortcuts-list kbd {
+  display: inline-block;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.75rem;
+  font-family: monospace;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  margin-right: 0.25rem;
 }
 @media (max-width: 768px) {
   .editor-grid {

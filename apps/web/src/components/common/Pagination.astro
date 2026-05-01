@@ -7,23 +7,91 @@ interface Props {
 
 const { currentPage, totalPages, basePath } = Astro.props;
 
-const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+function pageUrl(p: number) {
+  const url = new URL(basePath, "http://localhost");
+  url.searchParams.set("page", String(p));
+  return url.pathname + url.search;
+}
+
+const maxVisible = 5;
+let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+if (endPage - startPage + 1 < maxVisible) {
+  startPage = Math.max(1, endPage - maxVisible + 1);
+}
+const pages = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
 ---
 
 {totalPages > 1 && (
   <nav class="pagination">
     {currentPage > 1 && (
-      <a href={`${basePath}?page=${currentPage - 1}`}>Prev</a>
+      <a href={pageUrl(currentPage - 1)} class="page-link prev">Prev</a>
+    )}
+    {startPage > 1 && (
+      <>
+        <a href={pageUrl(1)} class="page-link">1</a>
+        {startPage > 2 && <span class="page-ellipsis">...</span>}
+      </>
     )}
     {pages.map((p) =>
       p === currentPage ? (
-        <span class="current">{p}</span>
+        <span class="page-link current">{p}</span>
       ) : (
-        <a href={`${basePath}?page=${p}`}>{p}</a>
+        <a href={pageUrl(p)} class="page-link">{p}</a>
       )
     )}
+    {endPage < totalPages && (
+      <>
+        {endPage < totalPages - 1 && <span class="page-ellipsis">...</span>}
+        <a href={pageUrl(totalPages)} class="page-link">{totalPages}</a>
+      </>
+    )}
     {currentPage < totalPages && (
-      <a href={`${basePath}?page=${currentPage + 1}`}>Next</a>
+      <a href={pageUrl(currentPage + 1)} class="page-link next">Next</a>
     )}
   </nav>
 )}
+
+<style>
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+  }
+  .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    padding: 0 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    color: var(--color-text);
+    transition: all 0.2s;
+  }
+  .page-link:hover {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+  .page-link.current {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+    font-weight: 600;
+  }
+  .page-link.prev,
+  .page-link.next {
+    padding: 0 0.75rem;
+  }
+  .page-ellipsis {
+    padding: 0 0.25rem;
+    color: var(--color-text-secondary);
+  }
+</style>

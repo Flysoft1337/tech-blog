@@ -1,22 +1,11 @@
 ---
 import AdminLayout from "../../layouts/AdminLayout.astro";
-import AdminTable from "../../components/vue/AdminTable.vue";
+import CommentManager from "../../components/vue/CommentManager.vue";
 ---
 
 <AdminLayout title="Comments">
   <div class="admin-header">
     <h1>Comments</h1>
   </div>
-  <AdminTable
-    client:load
-    endpoint="/api/v1/admin/comments"
-    columns={[
-      { key: "authorName", label: "Author" },
-      { key: "content", label: "Content" },
-      { key: "postTitle", label: "Post" },
-      { key: "status", label: "Status", type: "badge" },
-      { key: "createdAt", label: "Date", type: "date" },
-    ]}
-    actions={["approve", "spam", "delete"]}
-  />
+  <CommentManager client:load />
 </AdminLayout>

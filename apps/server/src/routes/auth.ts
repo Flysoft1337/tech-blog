@@ -8,7 +8,18 @@ export default async function authRoutes(app: FastifyInstance) {
   // Login
   app.post<{
     Body: { email: string; password: string };
-  }>("/login", async (request, reply) => {
+  }>("/login", {
+    schema: {
+      body: {
+        type: "object",
+        required: ["email", "password"],
+        properties: {
+          email: { type: "string", format: "email" },
+          password: { type: "string", minLength: 1 },
+        },
+      },
+    },
+  }, async (request, reply) => {
     const { email, password } = request.body;
 
     const user = await db

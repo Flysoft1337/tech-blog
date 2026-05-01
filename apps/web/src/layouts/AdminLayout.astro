@@ -31,7 +31,11 @@ const navItems = [
   </head>
   <body>
     <div class="admin-layout">
-      <aside class="admin-sidebar">
+      <button class="admin-menu-toggle" id="admin-menu-toggle" aria-label="Toggle sidebar">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="admin-sidebar-overlay" id="admin-sidebar-overlay"></div>
+      <aside class="admin-sidebar" id="admin-sidebar">
         <h2><a href="/admin">Tech Blog</a></h2>
         <nav class="admin-nav">
           {navItems.map((item) => (
@@ -65,6 +69,22 @@ const navItems = [
         if (!token && !window.location.pathname.includes("/admin/login")) {
           window.location.href = "/admin/login";
         }
+
+        // Sidebar toggle (mobile)
+        var toggleBtn = document.getElementById("admin-menu-toggle");
+        var sidebar = document.getElementById("admin-sidebar");
+        var overlay = document.getElementById("admin-sidebar-overlay");
+        function closeSidebar() {
+          sidebar && sidebar.classList.remove("open");
+          overlay && overlay.classList.remove("open");
+        }
+        if (toggleBtn) {
+          toggleBtn.addEventListener("click", function() {
+            sidebar && sidebar.classList.toggle("open");
+            overlay && overlay.classList.toggle("open");
+          });
+        }
+        if (overlay) overlay.addEventListener("click", closeSidebar);
 
         // Logout
         document.getElementById("logout-btn")?.addEventListener("click", function(e) {

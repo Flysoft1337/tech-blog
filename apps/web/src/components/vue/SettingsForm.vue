@@ -100,6 +100,7 @@ async function saveSettings() {
     if (data.success) {
       success.value = true;
       message.value = "Settings saved!";
+      if (typeof window.showToast === "function") window.showToast("Settings saved!");
     } else {
       success.value = false;
       message.value = data.error || "Failed to save";

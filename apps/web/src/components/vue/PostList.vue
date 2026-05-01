@@ -19,16 +19,17 @@
           <th>Title</th>
           <th>Status</th>
           <th>Category</th>
+          <th>Author</th>
           <th>Created</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         <tr v-if="loading">
-          <td colspan="5" style="text-align:center">Loading...</td>
+          <td colspan="6" style="text-align:center">Loading...</td>
         </tr>
         <tr v-else-if="items.length === 0">
-          <td colspan="5" style="text-align:center">No posts found</td>
+          <td colspan="6" style="text-align:center">No posts found</td>
         </tr>
         <tr v-for="item in items" :key="item.id">
           <td>
@@ -36,7 +37,8 @@
             <div v-if="item.pinned" style="font-size:0.7rem; color:var(--color-primary)">📌 Pinned</div>
           </td>
           <td><span :class="`badge badge-${item.status}`">{{ item.status }}</span></td>
-          <td>{{ item.categoryId || '-' }}</td>
+          <td>{{ item.categoryName || '-' }}</td>
+          <td>{{ item.authorName || '-' }}</td>
           <td>{{ formatDate(item.createdAt) }}</td>
           <td>
             <div style="display:flex; gap:0.5rem">

@@ -1,4 +1,4 @@
-import Fastify from "fastify";
+import Fastify, { type FastifyError } from "fastify";
 import cors from "@fastify/cors";
 import fastifyStatic from "@fastify/static";
 import { resolve } from "node:path";
@@ -20,6 +20,26 @@ export async function buildApp() {
   await app.register(cors, {
     origin: true,
     credentials: true,
+  });
+
+  app.setErrorHandler(async (error: FastifyError, request, reply) => {
+    if (error.validation) {
+      return reply.status(400).send({
+        success: false,
+        error: error.message,
+      });
+    }
+    if (error.code === "SQLITE_CONSTRAINT_UNIQUE" || error.message?.includes("UNIQUE constraint")) {
+      return reply.status(409).send({
+        success: false,
+        error: "A record with this value already exists",
+      });
+    }
+    request.log.error(error);
+    return reply.status(error.statusCode || 500).send({
+      success: false,
+      error: error.statusCode === 401 ? "Unauthorized" : "Internal server error",
+    });
   });
 
   await app.register(authPlugin);

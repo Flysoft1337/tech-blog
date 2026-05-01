@@ -2,12 +2,23 @@
   <div>
     <div v-if="comments.length > 0" class="comments-list">
       <div v-for="comment in comments" :key="comment.id" class="comment-item">
-        <div class="comment-header">
-          <strong>{{ comment.authorName }}</strong>
-          <time>{{ formatDate(comment.createdAt) }}</time>
+        <div class="comment-avatar">
+          <img :src="gravatarUrl(comment.authorEmail)" :alt="comment.authorName" />
         </div>
-        <p>{{ comment.content }}</p>
+        <div class="comment-body">
+          <div class="comment-header">
+            <strong>
+              <a v-if="comment.authorUrl" :href="comment.authorUrl" target="_blank" rel="nofollow noopener">{{ comment.authorName }}</a>
+              <span v-else>{{ comment.authorName }}</span>
+            </strong>
+            <time :title="new Date(comment.createdAt).toLocaleString('zh-CN')">{{ relativeTime(comment.createdAt) }}</time>
+          </div>
+          <p>{{ comment.content }}</p>
+        </div>
       </div>
+    </div>
+    <div v-else class="no-comments">
+      <p>No comments yet. Be the first!</p>
     </div>
 
     <form class="comment-form" @submit.prevent="submitComment">
@@ -55,12 +66,30 @@ const form = ref({
   content: "",
 });
 
-function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("zh-CN", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+function gravatarUrl(email: string) {
+  const hash = email?.trim().toLowerCase() || "";
+  return `https://gravatar.com/avatar/${hashCode(hash)}?d=mp&s=80`;
+}
+
+function hashCode(str: string) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash).toString(16);
+}
+
+function relativeTime(dateStr: string) {
+  const now = Date.now();
+  const diff = now - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString("zh-CN");
 }
 
 async function loadComments() {
@@ -107,19 +136,48 @@ onMounted(loadComments);
   margin-bottom: 2rem;
 }
 .comment-item {
-  padding: 1rem 0;
+  display: flex;
+  gap: 1rem;
+  padding: 1.25rem 0;
   border-bottom: 1px solid var(--color-border);
+}
+.comment-avatar img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-bg-secondary);
+}
+.comment-body {
+  flex: 1;
+  min-width: 0;
 }
 .comment-header {
   display: flex;
-  gap: 1rem;
-  align-items: center;
-  margin-bottom: 0.5rem;
+  gap: 0.75rem;
+  align-items: baseline;
+  margin-bottom: 0.375rem;
   font-size: 0.9rem;
+}
+.comment-header a {
+  color: var(--color-text);
+  font-weight: 600;
+}
+.comment-header a:hover {
+  color: var(--color-primary);
 }
 .comment-header time {
   color: var(--color-text-secondary);
   font-size: 0.8rem;
+}
+.comment-body p {
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+.no-comments {
+  text-align: center;
+  padding: 2rem 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
 }
 .comment-form h3 {
   margin-bottom: 1rem;
@@ -138,5 +196,16 @@ onMounted(loadComments);
   color: #059669;
   font-size: 0.875rem;
   margin-bottom: 0.5rem;
+}
+.error-msg {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+@media (max-width: 640px) {
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
 }
 </style>

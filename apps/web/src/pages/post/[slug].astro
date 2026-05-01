@@ -30,6 +30,10 @@ const date = post.publishedAt
     })
   : "";
 
+const plainText = (post.content || "").replace(/[#*`~>\[\]()!_\-|]/g, "");
+const wordCount = plainText.length;
+const readingTime = Math.max(1, Math.ceil(wordCount / 400));
+
 // Extract headings from HTML for TOC
 const headingRegex = /<h([2-3])\s+id="([^"]*)"[^>]*>([^<]*)<\/h[2-3]>/g;
 const headings: { depth: number; slug: string; text: string }[] = [];
@@ -39,7 +43,12 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
 }
 ---
 
-<BlogLayout title={`${post.title} - Tech Blog`} description={post.excerpt}>
+<BlogLayout
+  title={`${post.title} - Tech Blog`}
+  description={post.excerpt}
+  ogImage={post.coverImage}
+  ogType="article"
+>
   <div class="post-page">
     <article class="post-content">
       <header class="post-header">
@@ -52,6 +61,7 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
         <div class="post-meta">
           {post.author && <span>{post.author.displayName}</span>}
           {date && <time>{date}</time>}
+          <span>{readingTime} min read</span>
         </div>
         {post.tags?.length > 0 && (
           <div class="post-tags">
@@ -72,6 +82,26 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
       </aside>
     )}
   </div>
+  {(post.prevPost || post.nextPost) && (
+    <nav class="post-nav">
+      <div class="post-nav-item prev">
+        {post.prevPost && (
+          <>
+            <span class="post-nav-label">Previous</span>
+            <a href={`/post/${post.prevPost.slug}`}>{post.prevPost.title}</a>
+          </>
+        )}
+      </div>
+      <div class="post-nav-item next">
+        {post.nextPost && (
+          <>
+            <span class="post-nav-label">Next</span>
+            <a href={`/post/${post.nextPost.slug}`}>{post.nextPost.title}</a>
+          </>
+        )}
+      </div>
+    </nav>
+  )}
   <section class="comments-section">
     <h2>Comments</h2>
     <CommentForm client:visible slug={slug!} />
@@ -138,6 +168,40 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
   }
   .comments-section h2 {
     margin-bottom: 1.5rem;
+  }
+  .post-nav {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--color-border);
+  }
+  .post-nav-item {
+    flex: 1;
+    min-width: 0;
+  }
+  .post-nav-item.next {
+    text-align: right;
+  }
+  .post-nav-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+  }
+  .post-nav-item a {
+    color: var(--color-text);
+    font-weight: 500;
+    font-size: 0.95rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .post-nav-item a:hover {
+    color: var(--color-primary);
   }
   @media (max-width: 1024px) {
     .post-sidebar {

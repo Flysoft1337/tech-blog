@@ -4,7 +4,10 @@
 <header class="site-header">
   <div class="container header-inner">
     <a href="/" class="logo">Tech Blog</a>
-    <div class="header-right">
+    <button class="menu-toggle" id="menu-toggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="header-right" id="header-right">
       <form class="search-form" action="/" method="get">
         <input type="search" name="q" placeholder="Search..." class="search-input" />
       </form>
@@ -16,6 +19,18 @@
     </div>
   </div>
 </header>
+
+<script is:inline>
+  (function() {
+    var btn = document.getElementById("menu-toggle");
+    var nav = document.getElementById("header-right");
+    if (!btn || !nav) return;
+    btn.addEventListener("click", function() {
+      nav.classList.toggle("open");
+      btn.classList.toggle("open");
+    });
+  })();
+</script>
 
 <style>
   .site-header {
@@ -35,6 +50,31 @@
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--color-text);
+  }
+  .menu-toggle {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+  }
+  .menu-toggle span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: var(--color-text);
+    transition: transform 0.2s, opacity 0.2s;
+  }
+  .menu-toggle.open span:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+  }
+  .menu-toggle.open span:nth-child(2) {
+    opacity: 0;
+  }
+  .menu-toggle.open span:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
   }
   .header-right {
     display: flex;
@@ -71,11 +111,45 @@
     color: var(--color-primary);
   }
   @media (max-width: 640px) {
+    .menu-toggle {
+      display: flex;
+    }
+    .header-right {
+      display: none;
+      position: absolute;
+      top: 60px;
+      left: 0;
+      right: 0;
+      background: var(--color-bg);
+      border-bottom: 1px solid var(--color-border);
+      flex-direction: column;
+      padding: 1rem 1.5rem;
+      gap: 1rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .header-right.open {
+      display: flex;
+    }
     .search-input {
-      width: 120px;
+      width: 100%;
     }
     .search-input:focus {
-      width: 160px;
+      width: 100%;
+    }
+    .search-form {
+      width: 100%;
+    }
+    .main-nav {
+      width: 100%;
+      flex-direction: column;
+      gap: 0;
+    }
+    .main-nav a {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .main-nav a:last-child {
+      border-bottom: none;
     }
   }
 </style>

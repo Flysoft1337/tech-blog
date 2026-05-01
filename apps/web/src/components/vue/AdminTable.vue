@@ -43,6 +43,9 @@
                 <button class="btn" style="font-size:0.75rem; padding:0.25rem 0.5rem"
                   @click="updateStatus(item.id, 'spam')">Spam</button>
               </template>
+              <button v-if="createFields && createFields.length > 0" class="btn"
+                style="font-size:0.75rem; padding:0.25rem 0.5rem"
+                @click="openEdit(item)">Edit</button>
               <button class="btn" style="font-size:0.75rem; padding:0.25rem 0.5rem; color:#dc2626"
                 @click="deleteItem(item.id)">Delete</button>
             </div>
@@ -56,6 +59,23 @@
       <button v-if="page > 1" class="btn" @click="page--; loadData()">Prev</button>
       <span>{{ page }} / {{ totalPages }}</span>
       <button v-if="page < totalPages" class="btn" @click="page++; loadData()">Next</button>
+    </div>
+
+    <!-- Edit modal -->
+    <div v-if="editItem" class="modal-overlay" @click.self="editItem = null">
+      <div class="modal-card">
+        <h3>Edit</h3>
+        <form @submit.prevent="saveEdit">
+          <div v-for="field in createFields" :key="field.key" class="form-group">
+            <label>{{ field.label }}</label>
+            <input v-model="editForm[field.key]" :required="field.required" />
+          </div>
+          <div style="display:flex; gap:0.5rem; justify-content:flex-end">
+            <button type="button" class="btn" @click="editItem = null">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </template>
@@ -88,6 +108,8 @@ const loading = ref(true);
 const page = ref(1);
 const totalPages = ref(1);
 const newItem = ref<Record<string, string>>({});
+const editItem = ref<any>(null);
+const editForm = ref<Record<string, string>>({});
 
 function getHeaders() {
   const token = localStorage.getItem("accessToken");
@@ -132,7 +154,10 @@ async function createItem() {
     const data = await res.json();
     if (data.success) {
       newItem.value = {};
+      if (typeof window.showToast === "function") window.showToast("Created!");
       loadData();
+    } else {
+      if (typeof window.showToast === "function") window.showToast(data.error || "Failed", "error");
     }
   } catch {}
 }
@@ -144,6 +169,7 @@ async function deleteItem(id: number) {
       method: "DELETE",
       headers: getHeaders(),
     });
+    if (typeof window.showToast === "function") window.showToast("Deleted!");
     loadData();
   } catch {}
 }
@@ -155,9 +181,63 @@ async function updateStatus(id: number, status: string) {
       headers: getHeaders(),
       body: JSON.stringify({ status }),
     });
+    if (typeof window.showToast === "function") window.showToast("Updated!");
     loadData();
+  } catch {}
+}
+
+function openEdit(item: any) {
+  editItem.value = item;
+  const form: Record<string, string> = {};
+  for (const field of props.createFields || []) {
+    form[field.key] = item[field.key] || "";
+  }
+  editForm.value = form;
+}
+
+async function saveEdit() {
+  try {
+    const res = await fetch(`${props.endpoint}/${editItem.value.id}`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify(editForm.value),
+    });
+    const data = await res.json();
+    if (data.success) {
+      editItem.value = null;
+      if (typeof window.showToast === "function") window.showToast("Updated!");
+      loadData();
+    } else {
+      if (typeof window.showToast === "function") window.showToast(data.error || "Failed", "error");
+    }
   } catch {}
 }
 
 onMounted(loadData);
 </script>
+
+<style scoped>
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-card {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+.modal-card h3 {
+  margin-bottom: 1rem;
+}
+.form-group {
+  margin-bottom: 1rem;
+}
+</style>

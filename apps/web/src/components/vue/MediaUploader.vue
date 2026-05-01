@@ -81,6 +81,7 @@ async function handleFileSelect(e: Event) {
     await uploadFile(file);
   }
   uploading.value = false;
+  if (typeof window.showToast === "function") window.showToast("Upload complete!");
   loadData();
 }
 
@@ -92,6 +93,7 @@ async function handleDrop(e: DragEvent) {
     await uploadFile(file);
   }
   uploading.value = false;
+  if (typeof window.showToast === "function") window.showToast("Upload complete!");
   loadData();
 }
 
@@ -106,6 +108,7 @@ async function deleteItem(id: number) {
 
 function copyUrl(url: string) {
   navigator.clipboard.writeText(window.location.origin + url);
+  if (typeof window.showToast === "function") window.showToast("URL copied!");
 }
 
 onMounted(loadData);
