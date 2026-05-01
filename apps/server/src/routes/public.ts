@@ -9,13 +9,13 @@ import {
   users,
   settings,
 } from "../db/schema.js";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, like, or } from "drizzle-orm";
 import sanitizeHtml from "sanitize-html";
 
 export default async function publicRoutes(app: FastifyInstance) {
   // Public posts list
   app.get<{
-    Querystring: { page?: string; pageSize?: string; category?: string; tag?: string };
+    Querystring: { page?: string; pageSize?: string; category?: string; tag?: string; q?: string };
   }>("/posts", async (request) => {
     const settingsRows = await db.select().from(settings).all();
     const config: Record<string, string> = {};
@@ -25,6 +25,14 @@ export default async function publicRoutes(app: FastifyInstance) {
     const pageSize =
       Number(request.query.pageSize) || Number(config.postsPerPage) || 10;
     const offset = (page - 1) * pageSize;
+
+    const conditions = [eq(posts.status, "published")];
+    if (request.query.q) {
+      const search = `%${request.query.q}%`;
+      conditions.push(
+        or(like(posts.title, search), like(posts.content, search))!
+      );
+    }
 
     let query = db
       .select({
@@ -44,7 +52,7 @@ export default async function publicRoutes(app: FastifyInstance) {
       .from(posts)
       .leftJoin(users, eq(posts.authorId, users.id))
       .leftJoin(categories, eq(posts.categoryId, categories.id))
-      .where(eq(posts.status, "published"))
+      .where(and(...conditions))
       .orderBy(desc(posts.pinned), desc(posts.publishedAt))
       .limit(pageSize)
       .offset(offset);
@@ -54,7 +62,7 @@ export default async function publicRoutes(app: FastifyInstance) {
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(posts)
-      .where(eq(posts.status, "published"))
+      .where(and(...conditions))
       .all();
 
     return {

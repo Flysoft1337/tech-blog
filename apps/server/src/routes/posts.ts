@@ -2,8 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { db } from "../db/index.js";
 import { posts, postTags, categories, tags, users } from "../db/schema.js";
 import { eq, sql, desc, and } from "drizzle-orm";
-import { marked } from "marked";
-import sanitizeHtml from "sanitize-html";
+import { renderMarkdown } from "../services/markdown.js";
 
 export default async function postsRoutes(app: FastifyInstance) {
   app.addHook("onRequest", app.authenticate);
@@ -100,7 +99,7 @@ export default async function postsRoutes(app: FastifyInstance) {
     };
   }>("/", async (request) => {
     const { tagIds, ...data } = request.body;
-    const contentHtml = sanitizeHtml(await marked(data.content));
+    const contentHtml = await renderMarkdown(data.content);
 
     const result = await db
       .insert(posts)
@@ -152,7 +151,7 @@ export default async function postsRoutes(app: FastifyInstance) {
 
     const updateData: Record<string, unknown> = { ...data };
     if (data.content) {
-      updateData.contentHtml = sanitizeHtml(await marked(data.content));
+      updateData.contentHtml = await renderMarkdown(data.content);
     }
     if (data.status === "published" && !existing.publishedAt) {
       updateData.publishedAt = new Date().toISOString();

@@ -1,24 +1,38 @@
 ---
+export const prerender = false;
+
 import BlogLayout from "../layouts/BlogLayout.astro";
 import PostCard from "../components/blog/PostCard.astro";
 import Pagination from "../components/common/Pagination.astro";
 
 const page = Number(Astro.url.searchParams.get("page")) || 1;
+const q = Astro.url.searchParams.get("q") || "";
 const API_BASE = import.meta.env.PUBLIC_API_URL || "http://localhost:3000";
 
 let posts = { items: [], total: 0, page: 1, pageSize: 10, totalPages: 1 };
 
 try {
-  const res = await fetch(`${API_BASE}/api/v1/posts?page=${page}`);
+  const params = new URLSearchParams({ page: String(page) });
+  if (q) params.set("q", q);
+  const res = await fetch(`${API_BASE}/api/v1/posts?${params}`);
   const json = await res.json();
   if (json.success) posts = json.data;
 } catch {
   // API not available during build
 }
+
+const pageTitle = q ? `Search: ${q} - Tech Blog` : "Home - Tech Blog";
+const basePath = q ? `/?q=${encodeURIComponent(q)}` : "/";
 ---
 
-<BlogLayout title="Home - Tech Blog">
+<BlogLayout title={pageTitle}>
   <div class="home-content">
+    {q && (
+      <div class="search-header">
+        <h1>Search results for "{q}"</h1>
+        <p>{posts.total} post{posts.total !== 1 ? "s" : ""} found. <a href="/">Clear search</a></p>
+      </div>
+    )}
     <section class="posts-list">
       {posts.items.length > 0 ? (
         posts.items.map((post: any) => (
@@ -36,12 +50,21 @@ try {
         ))
       ) : (
         <div class="empty-state">
-          <h2>Welcome to Tech Blog</h2>
-          <p>No posts published yet. Start writing from the <a href="/admin">admin panel</a>.</p>
+          {q ? (
+            <>
+              <h2>No results found</h2>
+              <p>Try different keywords or <a href="/">browse all posts</a>.</p>
+            </>
+          ) : (
+            <>
+              <h2>Welcome to Tech Blog</h2>
+              <p>No posts published yet. Start writing from the <a href="/admin">admin panel</a>.</p>
+            </>
+          )}
         </div>
       )}
     </section>
-    <Pagination currentPage={posts.page} totalPages={posts.totalPages} basePath="/" />
+    <Pagination currentPage={posts.page} totalPages={posts.totalPages} basePath={basePath} />
   </div>
 </BlogLayout>
 
@@ -49,6 +72,19 @@ try {
   .home-content {
     max-width: var(--content-width);
     margin: 0 auto;
+  }
+  .search-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .search-header h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+  }
+  .search-header p {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
   }
   .empty-state {
     text-align: center;

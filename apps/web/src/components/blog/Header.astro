@@ -4,10 +4,15 @@
 <header class="site-header">
   <div class="container header-inner">
     <a href="/" class="logo">Tech Blog</a>
-    <nav class="main-nav">
-      <a href="/">Home</a>
-      <a href="/archives">Archives</a>
-    </nav>
+    <div class="header-right">
+      <form class="search-form" action="/" method="get">
+        <input type="search" name="q" placeholder="Search..." class="search-input" />
+      </form>
+      <nav class="main-nav">
+        <a href="/">Home</a>
+        <a href="/archives">Archives</a>
+      </nav>
+    </div>
   </div>
 </header>
 
@@ -30,6 +35,29 @@
     font-weight: 700;
     color: var(--color-text);
   }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  .search-form {
+    display: flex;
+  }
+  .search-input {
+    width: 180px;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    background: var(--color-bg-secondary);
+    transition: width 0.3s, border-color 0.2s;
+  }
+  .search-input:focus {
+    width: 240px;
+    border-color: var(--color-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
   .main-nav {
     display: flex;
     gap: 1.5rem;
@@ -40,5 +68,13 @@
   }
   .main-nav a:hover {
     color: var(--color-primary);
+  }
+  @media (max-width: 640px) {
+    .search-input {
+      width: 120px;
+    }
+    .search-input:focus {
+      width: 160px;
+    }
   }
 </style>
