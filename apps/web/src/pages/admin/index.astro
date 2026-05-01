@@ -9,6 +9,7 @@ initLocale(Astro.request);
 <AdminLayout title={t("admin.dashboard")}>
   <div class="admin-header">
     <h1>{t("admin.dashboard")}</h1>
+    <a href="/admin/posts/new" class="btn btn-primary">{t("admin.newPost")}</a>
   </div>
   <div id="pending-alert" style="display:none" class="admin-card" >
     <div style="display:flex; align-items:center; justify-content:space-between">
@@ -19,8 +20,12 @@ initLocale(Astro.request);
   </div>
   <div class="stats-grid" id="stats">
     <div class="stat-card">
-      <div class="label">{t("admin.posts")}</div>
-      <div class="value" id="stat-posts">-</div>
+      <div class="label">{t("admin.published")}</div>
+      <div class="value" id="stat-published">-</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">{t("admin.drafts")}</div>
+      <div class="value" id="stat-drafts">-</div>
     </div>
     <div class="stat-card">
       <div class="label">{t("admin.comments")}</div>
@@ -29,10 +34,6 @@ initLocale(Astro.request);
     <div class="stat-card">
       <div class="label">{t("admin.categories")}</div>
       <div class="value" id="stat-categories">-</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">{t("admin.media")}</div>
-      <div class="value" id="stat-media">-</div>
     </div>
   </div>
   <div class="admin-card">
@@ -58,6 +59,13 @@ initLocale(Astro.request);
     border: 1px solid #fbbf24;
     margin-bottom: 1rem;
   }
+  :global([data-theme="dark"]) #pending-alert {
+    background: #422006;
+    border-color: #92400e;
+  }
+  :global([data-theme="dark"]) #pending-alert span {
+    color: #fbbf24 !important;
+  }
 </style>
 
 <script>
@@ -66,28 +74,28 @@ initLocale(Astro.request);
     const headers = { Authorization: `Bearer ${token}` };
 
     try {
-      const [postsRes, commentsRes, catsRes, mediaRes, pendingRes] = await Promise.all([
-        fetch("/api/v1/admin/posts?pageSize=5", { headers }),
+      const [postsRes, draftsRes, commentsRes, catsRes, pendingRes] = await Promise.all([
+        fetch("/api/v1/admin/posts?status=published&pageSize=1", { headers }),
+        fetch("/api/v1/admin/posts?status=draft&pageSize=5", { headers }),
         fetch("/api/v1/admin/comments?pageSize=1", { headers }),
         fetch("/api/v1/admin/categories", { headers }),
-        fetch("/api/v1/admin/media?pageSize=1", { headers }),
         fetch("/api/v1/admin/comments?status=pending&pageSize=1", { headers }),
       ]);
 
       const posts = await postsRes.json();
+      const drafts = await draftsRes.json();
       const comments = await commentsRes.json();
       const cats = await catsRes.json();
-      const media = await mediaRes.json();
       const pending = await pendingRes.json();
 
-      document.getElementById("stat-posts")!.textContent =
+      document.getElementById("stat-published")!.textContent =
         posts.data?.total?.toString() || "0";
+      document.getElementById("stat-drafts")!.textContent =
+        drafts.data?.total?.toString() || "0";
       document.getElementById("stat-comments")!.textContent =
         comments.data?.total?.toString() || "0";
       document.getElementById("stat-categories")!.textContent =
         cats.data?.length?.toString() || "0";
-      document.getElementById("stat-media")!.textContent =
-        media.data?.total?.toString() || "0";
 
       const pendingCount = pending.data?.total || 0;
       if (pendingCount > 0) {
@@ -99,8 +107,12 @@ initLocale(Astro.request);
       }
 
       const tbody = document.getElementById("recent-posts")!;
-      if (posts.data?.items?.length) {
-        tbody.innerHTML = posts.data.items
+      const recentItems = drafts.data?.items || [];
+      const publishedRes2 = await fetch("/api/v1/admin/posts?pageSize=5", { headers });
+      const allPosts = await publishedRes2.json();
+      const items = allPosts.data?.items || [];
+      if (items.length) {
+        tbody.innerHTML = items
           .map(
             (p: any) => `
           <tr>

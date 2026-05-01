@@ -28,7 +28,7 @@ try {
 } catch {}
 ---
 
-<BlogLayout title={`${tag?.name || slug} - ${t("site.name")}`}>
+<BlogLayout title={`${tag?.name || slug} - ${t("site.name")}`} description={t("tag.title", { name: tag?.name || slug })}>
   <h1 class="page-title">{t("tag.title", { name: tag?.name || slug })}</h1>
   <section class="posts-list">
     {posts.items.map((post: any) => (

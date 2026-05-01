@@ -28,7 +28,7 @@ try {
 } catch {}
 ---
 
-<BlogLayout title={`${category?.name || slug} - ${t("site.name")}`}>
+<BlogLayout title={`${category?.name || slug} - ${t("site.name")}`} description={category?.description || t("category.title", { name: category?.name || slug })}>
   <h1 class="page-title">{t("category.title", { name: category?.name || slug })}</h1>
   {category?.description && <p class="page-desc">{category.description}</p>}
   <section class="posts-list">

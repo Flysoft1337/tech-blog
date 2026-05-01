@@ -32,8 +32,8 @@
             </div>
             <div v-if="showPreview" class="preview-pane prose" v-html="previewHtml"></div>
             <textarea v-else ref="contentArea" v-model="form.content" rows="20" style="font-family:monospace; font-size:0.9rem"
-              @keydown.tab.prevent="insertTab"></textarea>
-            <div class="word-count">{{ t("editor.chars", { count: form.content.length }) }}</div>
+              @keydown.tab.prevent="insertTab" @paste="handlePaste"></textarea>
+            <div class="word-count">{{ t("editor.chars", { count: form.content.length }) }} / {{ t("editor.words", { count: wordCount }) }}</div>
           </div>
           <div class="form-group">
             <label>{{ t("editor.excerpt") }}</label>
@@ -93,6 +93,25 @@
         </div>
       </div>
     </form>
+
+    <!-- Media picker modal -->
+    <div v-if="showMediaPicker" class="modal-overlay" @click.self="showMediaPicker = false">
+      <div class="modal-card media-picker">
+        <h3>{{ t("editor.selectImage") }}</h3>
+        <div class="media-grid">
+          <div v-for="file in mediaFiles" :key="file.id" class="media-item" @click="pickMedia(file.url)">
+            <img v-if="file.mimeType?.startsWith('image/')" :src="file.url" :alt="file.filename" loading="lazy" />
+            <span v-else class="file-name">{{ file.filename }}</span>
+          </div>
+          <div v-if="mediaFiles.length === 0" style="grid-column:1/-1; text-align:center; color:var(--color-text-secondary); padding:2rem">
+            {{ t("admin.noData") }}
+          </div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; margin-top:1rem">
+          <button type="button" class="btn" @click="showMediaPicker = false">{{ t("admin.cancelBtn") }}</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -136,6 +155,16 @@ const success = ref(false);
 const showPreview = ref(false);
 const previewHtml = ref("");
 const contentArea = ref<HTMLTextAreaElement | null>(null);
+const showMediaPicker = ref(false);
+const mediaFiles = ref<any[]>([]);
+
+const wordCount = computed(() => {
+  const text = form.value.content.replace(/[#*`~>\[\]()!_\-|]/g, "").trim();
+  if (!text) return 0;
+  const cjk = (text.match(/[一-鿿㐀-䶿]/g) || []).length;
+  const eng = text.replace(/[一-鿿㐀-䶿]/g, " ").split(/\s+/).filter(Boolean).length;
+  return cjk + eng;
+});
 
 let previewTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -209,16 +238,61 @@ function insertLink() {
 }
 
 function insertImage() {
+  showMediaPicker.value = true;
+  loadMediaFiles();
+}
+
+async function loadMediaFiles() {
+  try {
+    const res = await fetch("/api/v1/admin/media?pageSize=50", { headers: getHeaders() });
+    const data = await res.json();
+    if (data.success) mediaFiles.value = data.data.items || [];
+  } catch {}
+}
+
+function pickMedia(url: string) {
   const ta = contentArea.value;
   if (!ta) return;
   const pos = ta.selectionStart;
-  const snippet = "![alt](url)";
+  const snippet = `![image](${url})`;
   form.value.content = form.value.content.substring(0, pos) + snippet + form.value.content.substring(pos);
+  showMediaPicker.value = false;
   requestAnimationFrame(() => {
     ta.focus();
-    ta.selectionStart = pos + 2;
-    ta.selectionEnd = pos + 5;
+    ta.selectionStart = ta.selectionEnd = pos + snippet.length;
   });
+}
+
+async function handlePaste(e: ClipboardEvent) {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith("image/")) {
+      e.preventDefault();
+      const file = item.getAsFile();
+      if (!file) return;
+      const formData = new FormData();
+      formData.append("file", file);
+      try {
+        const res = await fetch("/api/v1/admin/media", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
+          body: formData,
+        });
+        const data = await res.json();
+        if (data.success) {
+          const url = data.data.url;
+          const ta = contentArea.value;
+          if (!ta) return;
+          const pos = ta.selectionStart;
+          const snippet = `![image](${url})`;
+          form.value.content = form.value.content.substring(0, pos) + snippet + form.value.content.substring(pos);
+          if (typeof window.showToast === "function") window.showToast(t("admin.uploadComplete"));
+        }
+      } catch {}
+      return;
+    }
+  }
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -440,5 +514,59 @@ onUnmounted(() => {
   .editor-sidebar {
     width: 100%;
   }
+}
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-card {
+  background: var(--color-bg);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  max-width: 700px;
+  width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+}
+.media-picker h3 {
+  margin-bottom: 1rem;
+}
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+.media-item {
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color 0.15s;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-secondary);
+}
+.media-item:hover {
+  border-color: var(--color-primary);
+}
+.media-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.file-name {
+  font-size: 0.75rem;
+  padding: 0.5rem;
+  text-align: center;
+  word-break: break-all;
+  color: var(--color-text-secondary);
 }
 </style>

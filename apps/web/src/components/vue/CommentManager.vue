@@ -11,6 +11,9 @@
         <button :class="['tab', { active: statusFilter === 'approved' }]" @click="setFilter('approved')">{{ t("admin.approved") }}</button>
         <button :class="['tab', { active: statusFilter === 'spam' }]" @click="setFilter('spam')">{{ t("admin.spam") }}</button>
       </div>
+      <div class="search-box">
+        <input v-model="searchQuery" type="search" :placeholder="t('admin.searchComments')" @input="debouncedSearch" @keyup.enter="loadData" />
+      </div>
     </div>
 
     <!-- Bulk actions bar -->
@@ -101,6 +104,17 @@ const totalPages = ref(1);
 const statusFilter = ref("");
 const counts = ref({ total: 0, pending: 0 });
 const selectedIds = ref<Set<number>>(new Set());
+const searchQuery = ref("");
+
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
+
+function debouncedSearch() {
+  if (searchTimer) clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    page.value = 1;
+    loadData();
+  }, 400);
+}
 
 const allChecked = computed(() =>
   items.value.length > 0 && items.value.every(i => selectedIds.value.has(i.id))
@@ -146,6 +160,7 @@ async function loadData() {
   try {
     const params = new URLSearchParams({ page: String(page.value), pageSize: "20" });
     if (statusFilter.value) params.set("status", statusFilter.value);
+    if (searchQuery.value) params.set("q", searchQuery.value);
 
     const res = await fetch(`/api/v1/admin/comments?${params}`, { headers: getHeaders() });
     const data = await res.json();
@@ -217,7 +232,19 @@ onMounted(loadData);
 
 <style scoped>
 .toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 1rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.search-box input {
+  width: 200px;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
 }
 .filter-tabs {
   display: flex;

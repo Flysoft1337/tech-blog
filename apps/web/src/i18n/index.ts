@@ -43,6 +43,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "post.copied": "已复制！",
     "post.pinned": "置顶",
     "post.toc": "目录",
+    "post.readMore": "阅读全文",
 
     // Comment
     "comment.noComments": "暂无评论，来做第一个留言的人！",
@@ -200,6 +201,8 @@ const translations: Record<Locale, Record<string, string>> = {
     "editor.shortcuts": "快捷键",
     "editor.insertIndent": "插入缩进",
     "editor.savePost": "保存文章",
+    "editor.selectImage": "选择图片",
+    "editor.words": "{count} 字",
 
     // Comment manager
     "admin.pending": "待审核",
@@ -208,6 +211,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "admin.approve": "通过",
     "admin.markSpam": "垃圾",
     "admin.noComments": "暂无评论",
+    "admin.searchComments": "搜索评论...",
     "admin.commentUpdated": "评论已{status}！",
     "admin.deleteComment": "确定删除此评论？",
     "admin.bulkApprove": '确定将 {count} 条评论设为"{status}"？',
@@ -298,6 +302,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "post.copied": "Copied!",
     "post.pinned": "Pinned",
     "post.toc": "Table of Contents",
+    "post.readMore": "Read more",
 
     // Comment
     "comment.noComments": "No comments yet. Be the first!",
@@ -455,6 +460,8 @@ const translations: Record<Locale, Record<string, string>> = {
     "editor.shortcuts": "Keyboard Shortcuts",
     "editor.insertIndent": "Insert indent",
     "editor.savePost": "Save post",
+    "editor.selectImage": "Select Image",
+    "editor.words": "{count} words",
 
     // Comment manager
     "admin.pending": "Pending",
@@ -463,6 +470,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "admin.approve": "Approve",
     "admin.markSpam": "Spam",
     "admin.noComments": "No comments",
+    "admin.searchComments": "Search comments...",
     "admin.commentUpdated": "Comment {status}!",
     "admin.deleteComment": "Delete this comment?",
     "admin.bulkApprove": "Set {count} comments to \"{status}\"?",

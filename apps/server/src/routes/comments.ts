@@ -1,21 +1,31 @@
 import type { FastifyInstance } from "fastify";
 import { db } from "../db/index.js";
 import { comments, posts } from "../db/schema.js";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, and, like, or } from "drizzle-orm";
 
 export default async function commentsRoutes(app: FastifyInstance) {
   app.addHook("onRequest", app.authenticate);
 
   app.get<{
-    Querystring: { page?: string; pageSize?: string; status?: string };
+    Querystring: { page?: string; pageSize?: string; status?: string; q?: string };
   }>("/", async (request) => {
     const page = Number(request.query.page) || 1;
     const pageSize = Number(request.query.pageSize) || 20;
     const offset = (page - 1) * pageSize;
 
-    const where = request.query.status
-      ? eq(comments.status, request.query.status as "pending" | "approved" | "spam")
-      : undefined;
+    const conditions = [];
+    if (request.query.status) {
+      conditions.push(eq(comments.status, request.query.status as "pending" | "approved" | "spam"));
+    }
+    if (request.query.q) {
+      const q = `%${request.query.q}%`;
+      conditions.push(or(
+        like(comments.authorName, q),
+        like(comments.authorEmail, q),
+        like(comments.content, q),
+      ));
+    }
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
 
     const items = await db
       .select({

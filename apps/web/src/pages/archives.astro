@@ -39,7 +39,7 @@ for (const post of posts) {
 const years = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
 ---
 
-<BlogLayout title={t("archives.title")}>
+<BlogLayout title={t("archives.title")} description={t("archives.totalPosts", { count: posts.length })}>
   <h1 class="page-title">{t("archives.heading")}</h1>
   <p class="total-count">{t("archives.totalPosts", { count: posts.length })}</p>
   {years.map((year) => (
