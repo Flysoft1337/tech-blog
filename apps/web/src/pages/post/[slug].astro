@@ -108,6 +108,27 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
   </section>
 </BlogLayout>
 
+<script>
+  document.querySelectorAll(".prose .shiki").forEach(function(block) {
+    const btn = document.createElement("button");
+    btn.className = "code-copy-btn";
+    btn.textContent = "Copy";
+    btn.addEventListener("click", function() {
+      const code = block.querySelector("code");
+      if (!code) return;
+      navigator.clipboard.writeText(code.textContent || "").then(function() {
+        btn.textContent = "Copied!";
+        btn.classList.add("copied");
+        setTimeout(function() {
+          btn.textContent = "Copy";
+          btn.classList.remove("copied");
+        }, 2000);
+      });
+    });
+    block.appendChild(btn);
+  });
+</script>
+
 <style>
   .post-page {
     display: flex;

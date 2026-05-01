@@ -1,5 +1,6 @@
 import Fastify, { type FastifyError } from "fastify";
 import cors from "@fastify/cors";
+import rateLimit from "@fastify/rate-limit";
 import fastifyStatic from "@fastify/static";
 import { resolve } from "node:path";
 import { existsSync, mkdirSync } from "node:fs";
@@ -20,6 +21,10 @@ export async function buildApp() {
   await app.register(cors, {
     origin: true,
     credentials: true,
+  });
+
+  await app.register(rateLimit, {
+    global: false,
   });
 
   app.setErrorHandler(async (error: FastifyError, request, reply) => {

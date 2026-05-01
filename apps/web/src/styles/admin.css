@@ -132,6 +132,11 @@
   color: #991b1b;
 }
 
+.badge-rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 /* Dashboard stats */
 .stats-grid {
   display: grid;

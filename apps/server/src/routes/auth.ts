@@ -9,6 +9,12 @@ export default async function authRoutes(app: FastifyInstance) {
   app.post<{
     Body: { email: string; password: string };
   }>("/login", {
+    config: {
+      rateLimit: {
+        max: 5,
+        timeWindow: "1 minute",
+      },
+    },
     schema: {
       body: {
         type: "object",

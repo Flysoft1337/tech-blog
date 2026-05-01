@@ -201,7 +201,7 @@ onMounted(loadData);
   z-index: 1000;
 }
 .modal-card {
-  background: white;
+  background: var(--color-bg);
   border-radius: 8px;
   padding: 1.5rem;
   width: 100%;

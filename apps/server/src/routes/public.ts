@@ -260,6 +260,12 @@ export default async function publicRoutes(app: FastifyInstance) {
       parentId?: number;
     };
   }>("/posts/:slug/comments", {
+    config: {
+      rateLimit: {
+        max: 10,
+        timeWindow: "1 minute",
+      },
+    },
     schema: {
       body: {
         type: "object",

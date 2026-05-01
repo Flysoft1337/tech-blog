@@ -13,6 +13,18 @@
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
+[data-theme="dark"] {
+  --color-bg: #1a1a2e;
+  --color-bg-secondary: #16213e;
+  --color-text: #e2e8f0;
+  --color-text-secondary: #94a3b8;
+  --color-primary: #60a5fa;
+  --color-primary-hover: #93bbfd;
+  --color-border: #334155;
+  --color-code-bg: #1e293b;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -102,6 +114,43 @@ img {
   margin-bottom: 1.25rem;
   background-color: #f6f8fa !important;
   border: 1px solid var(--color-border);
+  position: relative;
+}
+
+[data-theme="dark"] .prose .shiki {
+  background-color: #0d1117 !important;
+}
+
+.code-copy-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  font-size: 0.7rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.prose .shiki:hover .code-copy-btn {
+  opacity: 1;
+}
+
+.code-copy-btn:hover {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.code-copy-btn.copied {
+  background: #059669;
+  color: white;
+  border-color: #059669;
+  opacity: 1;
 }
 
 .prose .shiki code {
@@ -197,6 +246,8 @@ select {
   border-radius: var(--radius);
   font-size: 0.95rem;
   font-family: inherit;
+  background: var(--color-bg);
+  color: var(--color-text);
   transition: border-color 0.2s;
 }
 
