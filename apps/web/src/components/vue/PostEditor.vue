@@ -14,13 +14,26 @@
           <div class="form-group">
             <div class="content-header">
               <label>Content (Markdown)</label>
-              <button type="button" class="btn preview-toggle" @click="showPreview = !showPreview">
-                {{ showPreview ? "Edit" : "Preview" }}
-              </button>
+              <div class="content-actions">
+                <div v-if="!showPreview" class="md-toolbar">
+                  <button type="button" title="Bold" @click="wrapSelection('**', '**')"><b>B</b></button>
+                  <button type="button" title="Italic" @click="wrapSelection('*', '*')"><i>I</i></button>
+                  <button type="button" title="Code" @click="wrapSelection('`', '`')"><code>{'<>'}</code></button>
+                  <button type="button" title="Link" @click="insertLink">Link</button>
+                  <button type="button" title="Image" @click="insertImage">Img</button>
+                  <button type="button" title="Heading" @click="insertAtLineStart('## ')">H2</button>
+                  <button type="button" title="List" @click="insertAtLineStart('- ')">List</button>
+                  <button type="button" title="Code Block" @click="wrapSelection('\n```\n', '\n```\n')">Block</button>
+                </div>
+                <button type="button" class="btn preview-toggle" @click="showPreview = !showPreview">
+                  {{ showPreview ? "Edit" : "Preview" }}
+                </button>
+              </div>
             </div>
             <div v-if="showPreview" class="preview-pane prose" v-html="previewHtml"></div>
-            <textarea v-else v-model="form.content" rows="20" style="font-family:monospace; font-size:0.9rem"
+            <textarea v-else ref="contentArea" v-model="form.content" rows="20" style="font-family:monospace; font-size:0.9rem"
               @keydown.tab.prevent="insertTab"></textarea>
+            <div class="word-count">{{ form.content.length }} chars</div>
           </div>
           <div class="form-group">
             <label>Excerpt</label>
@@ -107,6 +120,7 @@ const message = ref("");
 const success = ref(false);
 const showPreview = ref(false);
 const previewHtml = ref("");
+const contentArea = ref<HTMLTextAreaElement | null>(null);
 
 let previewTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -142,6 +156,53 @@ function insertTab(e: KeyboardEvent) {
   form.value.content = form.value.content.substring(0, start) + "  " + form.value.content.substring(end);
   requestAnimationFrame(() => {
     target.selectionStart = target.selectionEnd = start + 2;
+  });
+}
+
+function wrapSelection(before: string, after: string) {
+  const ta = contentArea.value;
+  if (!ta) return;
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  const selected = form.value.content.substring(start, end) || "text";
+  form.value.content = form.value.content.substring(0, start) + before + selected + after + form.value.content.substring(end);
+  requestAnimationFrame(() => {
+    ta.focus();
+    ta.selectionStart = start + before.length;
+    ta.selectionEnd = start + before.length + selected.length;
+  });
+}
+
+function insertAtLineStart(prefix: string) {
+  const ta = contentArea.value;
+  if (!ta) return;
+  const pos = ta.selectionStart;
+  const lineStart = form.value.content.lastIndexOf("\n", pos - 1) + 1;
+  form.value.content = form.value.content.substring(0, lineStart) + prefix + form.value.content.substring(lineStart);
+  requestAnimationFrame(() => {
+    ta.focus();
+    ta.selectionStart = ta.selectionEnd = pos + prefix.length;
+  });
+}
+
+function insertLink() {
+  const ta = contentArea.value;
+  if (!ta) return;
+  const selected = form.value.content.substring(ta.selectionStart, ta.selectionEnd);
+  const text = selected || "link text";
+  wrapSelection("[", "](url)");
+}
+
+function insertImage() {
+  const ta = contentArea.value;
+  if (!ta) return;
+  const pos = ta.selectionStart;
+  const snippet = "![alt](url)";
+  form.value.content = form.value.content.substring(0, pos) + snippet + form.value.content.substring(pos);
+  requestAnimationFrame(() => {
+    ta.focus();
+    ta.selectionStart = pos + 2;
+    ta.selectionEnd = pos + 5;
   });
 }
 
@@ -271,6 +332,41 @@ onUnmounted(() => {
 }
 .content-header label {
   margin-bottom: 0;
+}
+.content-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.md-toolbar {
+  display: flex;
+  gap: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.md-toolbar button {
+  border: none;
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-right: 1px solid var(--color-border);
+}
+.md-toolbar button:last-child {
+  border-right: none;
+}
+.md-toolbar button:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-text);
+}
+.word-count {
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  margin-top: 0.25rem;
 }
 .preview-toggle {
   font-size: 0.75rem;
