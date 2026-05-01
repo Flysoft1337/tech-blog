@@ -1,11 +1,15 @@
 ---
+export const prerender = false;
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import CommentManager from "../../components/vue/CommentManager.vue";
+import { t, initLocale } from "../../i18n/index";
+
+initLocale(Astro.request);
 ---
 
-<AdminLayout title="Comments">
+<AdminLayout title={t("admin.comments")}>
   <div class="admin-header">
-    <h1>Comments</h1>
+    <h1>{t("admin.comments")}</h1>
   </div>
   <CommentManager client:load />
 </AdminLayout>

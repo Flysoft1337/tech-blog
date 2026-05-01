@@ -7,7 +7,7 @@
           <label>{{ field.label }}</label>
           <input v-model="newItem[field.key]" :required="field.required" :placeholder="field.label" />
         </div>
-        <button type="submit" class="btn btn-primary">Add</button>
+        <button type="submit" class="btn btn-primary">{{ t("admin.add") }}</button>
       </form>
     </div>
 
@@ -16,15 +16,18 @@
       <thead>
         <tr>
           <th v-for="col in columns" :key="col.key">{{ col.label }}</th>
-          <th>Actions</th>
+          <th>{{ t("admin.actions") }}</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-if="loading">
-          <td :colspan="columns.length + 1" style="text-align:center">Loading...</td>
-        </tr>
+        <template v-if="loading">
+          <tr v-for="n in 4" :key="n" class="skeleton-row">
+            <td v-for="col in columns" :key="col.key"><div class="skeleton" style="width:70%"></div></td>
+            <td><div class="skeleton" style="width:80px"></div></td>
+          </tr>
+        </template>
         <tr v-else-if="items.length === 0">
-          <td :colspan="columns.length + 1" style="text-align:center">No data</td>
+          <td :colspan="columns.length + 1" style="text-align:center">{{ t("admin.noData") }}</td>
         </tr>
         <tr v-for="item in items" :key="item.id">
           <td v-for="col in columns" :key="col.key">
@@ -37,17 +40,17 @@
             <div style="display:flex; gap:0.5rem">
               <template v-if="actions?.includes('approve')">
                 <button class="btn" style="font-size:0.75rem; padding:0.25rem 0.5rem"
-                  @click="updateStatus(item.id, 'approved')">Approve</button>
+                  @click="updateStatus(item.id, 'approved')">{{ t("admin.approve") }}</button>
               </template>
               <template v-if="actions?.includes('spam')">
                 <button class="btn" style="font-size:0.75rem; padding:0.25rem 0.5rem"
-                  @click="updateStatus(item.id, 'spam')">Spam</button>
+                  @click="updateStatus(item.id, 'spam')">{{ t("admin.markSpam") }}</button>
               </template>
               <button v-if="createFields && createFields.length > 0" class="btn"
                 style="font-size:0.75rem; padding:0.25rem 0.5rem"
-                @click="openEdit(item)">Edit</button>
+                @click="openEdit(item)">{{ t("admin.edit") }}</button>
               <button class="btn" style="font-size:0.75rem; padding:0.25rem 0.5rem; color:#dc2626"
-                @click="deleteItem(item.id)">Delete</button>
+                @click="deleteItem(item.id)">{{ t("admin.delete") }}</button>
             </div>
           </td>
         </tr>
@@ -56,23 +59,23 @@
 
     <!-- Pagination -->
     <div v-if="totalPages > 1" class="pagination">
-      <button v-if="page > 1" class="btn" @click="page--; loadData()">Prev</button>
+      <button v-if="page > 1" class="btn" @click="page--; loadData()">{{ t("admin.prev") }}</button>
       <span>{{ page }} / {{ totalPages }}</span>
-      <button v-if="page < totalPages" class="btn" @click="page++; loadData()">Next</button>
+      <button v-if="page < totalPages" class="btn" @click="page++; loadData()">{{ t("admin.next") }}</button>
     </div>
 
     <!-- Edit modal -->
-    <div v-if="editItem" class="modal-overlay" @click.self="editItem = null">
-      <div class="modal-card">
-        <h3>Edit</h3>
+    <div v-if="editItem" class="modal-overlay" @click.self="editItem = null" @keydown.esc="editItem = null">
+      <div class="modal-card" role="dialog" aria-modal="true" aria-label="Edit item">
+        <h3>{{ t("admin.edit") }}</h3>
         <form @submit.prevent="saveEdit">
           <div v-for="field in createFields" :key="field.key" class="form-group">
             <label>{{ field.label }}</label>
             <input v-model="editForm[field.key]" :required="field.required" />
           </div>
           <div style="display:flex; gap:0.5rem; justify-content:flex-end">
-            <button type="button" class="btn" @click="editItem = null">Cancel</button>
-            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" class="btn" @click="editItem = null">{{ t("admin.cancelBtn") }}</button>
+            <button type="submit" class="btn btn-primary">{{ t("admin.save") }}</button>
           </div>
         </form>
       </div>
@@ -82,6 +85,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { t } from "../../i18n/index";
 
 interface Column {
   key: string;
@@ -154,7 +158,7 @@ async function createItem() {
     const data = await res.json();
     if (data.success) {
       newItem.value = {};
-      if (typeof window.showToast === "function") window.showToast("Created!");
+      if (typeof window.showToast === "function") window.showToast(t("admin.created!"));
       loadData();
     } else {
       if (typeof window.showToast === "function") window.showToast(data.error || "Failed", "error");
@@ -163,13 +167,13 @@ async function createItem() {
 }
 
 async function deleteItem(id: number) {
-  if (!confirm("Are you sure?")) return;
+  if (!confirm(t("admin.confirm"))) return;
   try {
     await fetch(`${props.endpoint}/${id}`, {
       method: "DELETE",
       headers: getHeaders(),
     });
-    if (typeof window.showToast === "function") window.showToast("Deleted!");
+    if (typeof window.showToast === "function") window.showToast(t("admin.deleted!"));
     loadData();
   } catch {}
 }
@@ -181,7 +185,7 @@ async function updateStatus(id: number, status: string) {
       headers: getHeaders(),
       body: JSON.stringify({ status }),
     });
-    if (typeof window.showToast === "function") window.showToast("Updated!");
+    if (typeof window.showToast === "function") window.showToast(t("admin.updated!"));
     loadData();
   } catch {}
 }
@@ -205,7 +209,7 @@ async function saveEdit() {
     const data = await res.json();
     if (data.success) {
       editItem.value = null;
-      if (typeof window.showToast === "function") window.showToast("Updated!");
+      if (typeof window.showToast === "function") window.showToast(t("admin.updated!"));
       loadData();
     } else {
       if (typeof window.showToast === "function") window.showToast(data.error || "Failed", "error");
@@ -239,5 +243,19 @@ onMounted(loadData);
 }
 .form-group {
   margin-bottom: 1rem;
+}
+.skeleton {
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--color-bg-secondary) 25%, var(--color-border) 50%, var(--color-bg-secondary) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+.skeleton-row td {
+  padding: 0.75rem 0.5rem;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 </style>

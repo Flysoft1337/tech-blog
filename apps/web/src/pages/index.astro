@@ -4,6 +4,9 @@ export const prerender = false;
 import BlogLayout from "../layouts/BlogLayout.astro";
 import PostCard from "../components/blog/PostCard.astro";
 import Pagination from "../components/common/Pagination.astro";
+import { t, initLocale } from "../i18n/index";
+
+initLocale(Astro.request);
 
 const page = Number(Astro.url.searchParams.get("page")) || 1;
 const q = Astro.url.searchParams.get("q") || "";
@@ -21,7 +24,7 @@ try {
   // API not available during build
 }
 
-const pageTitle = q ? `Search: ${q} - Tech Blog` : "Home - Tech Blog";
+const pageTitle = q ? `${t("home.searchResults", { q })} - ${t("site.name")}` : t("home.title");
 const basePath = q ? `/?q=${encodeURIComponent(q)}` : "/";
 ---
 
@@ -29,8 +32,8 @@ const basePath = q ? `/?q=${encodeURIComponent(q)}` : "/";
   <div class="home-content">
     {q && (
       <div class="search-header">
-        <h1>Search results for "{q}"</h1>
-        <p>{posts.total} post{posts.total !== 1 ? "s" : ""} found. <a href="/">Clear search</a></p>
+        <h1>{t("home.searchResults", { q })}</h1>
+        <p>{t("home.postsFound", { count: posts.total })} <a href="/">{t("home.clearSearch")}</a></p>
       </div>
     )}
     <section class="posts-list">
@@ -52,13 +55,13 @@ const basePath = q ? `/?q=${encodeURIComponent(q)}` : "/";
         <div class="empty-state">
           {q ? (
             <>
-              <h2>No results found</h2>
-              <p>Try different keywords or <a href="/">browse all posts</a>.</p>
+              <h2>{t("home.noResults")}</h2>
+              <p>{t("home.tryDifferent")} <a href="/">{t("home.browseAll")}</a>.</p>
             </>
           ) : (
             <>
-              <h2>Welcome to Tech Blog</h2>
-              <p>No posts published yet. Start writing from the <a href="/admin">admin panel</a>.</p>
+              <h2>{t("home.welcome")}</h2>
+              <p>{t("home.noPosts")} <a href="/admin">{t("home.adminPanel")}</a>{t("home.startWriting")}</p>
             </>
           )}
         </div>
@@ -70,8 +73,13 @@ const basePath = q ? `/?q=${encodeURIComponent(q)}` : "/";
 
 <style>
   .home-content {
-    max-width: var(--content-width);
+    max-width: var(--max-width);
     margin: 0 auto;
+  }
+  .posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1rem, 2vw, 2rem);
   }
   .search-header {
     margin-bottom: 1.5rem;

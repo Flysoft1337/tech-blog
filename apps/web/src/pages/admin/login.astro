@@ -1,16 +1,22 @@
 ---
+export const prerender = false;
 import "../../styles/global.css";
 import "../../styles/admin.css";
-
+import { t, initLocale } from "../../i18n/index";
 import LoginForm from "../../components/vue/LoginForm.vue";
+
+initLocale(Astro.request);
 ---
 
 <!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
+    <script is:inline>
+      (function(){var t=localStorage.getItem("theme")||(window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.setAttribute("data-theme",t);var l=localStorage.getItem("locale");if(l&&!document.cookie.match("locale="))document.cookie="locale="+l+";path=/;max-age=31536000"})();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Login - Admin</title>
+    <title>{t("admin.login")} - Admin</title>
     <meta name="robots" content="noindex, nofollow" />
   </head>
   <body>

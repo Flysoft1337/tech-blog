@@ -2,6 +2,9 @@
 export const prerender = false;
 
 import BlogLayout from "../layouts/BlogLayout.astro";
+import { t, initLocale } from "../i18n/index";
+
+initLocale(Astro.request);
 
 const API_BASE = import.meta.env.PUBLIC_API_URL || "http://localhost:3000";
 
@@ -14,19 +17,19 @@ try {
 } catch {}
 ---
 
-<BlogLayout title="Categories - Tech Blog">
-  <h1 class="page-title">Categories</h1>
+<BlogLayout title={t("categories.title")}>
+  <h1 class="page-title">{t("categories.heading")}</h1>
   <div class="categories-grid">
     {categories.length > 0 ? (
       categories.map((cat: any) => (
         <a href={`/category/${cat.slug}`} class="category-card">
           <h2>{cat.name}</h2>
           {cat.description && <p class="category-desc">{cat.description}</p>}
-          <span class="post-count">{cat.postCount} {cat.postCount === 1 ? "post" : "posts"}</span>
+          <span class="post-count">{t("categories.postCount", { count: cat.postCount })}</span>
         </a>
       ))
     ) : (
-      <p class="empty">No categories yet.</p>
+      <p class="empty">{t("categories.empty")}</p>
     )}
   </div>
 </BlogLayout>

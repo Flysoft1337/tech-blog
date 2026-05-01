@@ -3,14 +3,17 @@ export const prerender = false;
 
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import PostEditor from "../../../components/vue/PostEditor.vue";
+import { t, initLocale } from "../../../i18n/index";
+
+initLocale(Astro.request);
 
 const { id } = Astro.params;
 ---
 
-<AdminLayout title={id === "new" ? "New Post" : "Edit Post"}>
+<AdminLayout title={id === "new" ? t("admin.newPost") : t("admin.editPost")}>
   <div class="admin-header">
-    <h1>{id === "new" ? "New Post" : "Edit Post"}</h1>
-    <a href="/admin/posts" class="btn">Back to Posts</a>
+    <h1>{id === "new" ? t("admin.newPost") : t("admin.editPost")}</h1>
+    <a href="/admin/posts" class="btn">{t("admin.backToPosts")}</a>
   </div>
   <PostEditor client:load postId={id === "new" ? undefined : id} />
 </AdminLayout>

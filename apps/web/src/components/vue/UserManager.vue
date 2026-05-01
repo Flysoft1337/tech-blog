@@ -2,28 +2,28 @@
   <div>
     <!-- Create user form -->
     <div class="admin-card" style="margin-bottom:1.5rem">
-      <h3 style="margin-bottom:1rem">Add User</h3>
+      <h3 style="margin-bottom:1rem">{{ t("admin.addUser") }}</h3>
       <form @submit.prevent="createUser" style="display:flex; gap:0.75rem; align-items:flex-end; flex-wrap:wrap">
         <div class="form-group" style="margin-bottom:0; flex:1; min-width:150px">
-          <label>Email</label>
+          <label>{{ t("admin.email") }}</label>
           <input v-model="newUser.email" type="email" required placeholder="user@example.com" />
         </div>
         <div class="form-group" style="margin-bottom:0; flex:1; min-width:150px">
-          <label>Display Name</label>
+          <label>{{ t("admin.displayName") }}</label>
           <input v-model="newUser.displayName" required placeholder="Name" />
         </div>
         <div class="form-group" style="margin-bottom:0; flex:1; min-width:120px">
-          <label>Password</label>
+          <label>{{ t("admin.password") }}</label>
           <input v-model="newUser.password" type="password" required placeholder="Password" />
         </div>
         <div class="form-group" style="margin-bottom:0; min-width:100px">
-          <label>Role</label>
+          <label>{{ t("admin.role") }}</label>
           <select v-model="newUser.role">
-            <option value="editor">Editor</option>
-            <option value="admin">Admin</option>
+            <option value="editor">{{ t("admin.editor") }}</option>
+            <option value="admin">{{ t("admin.adminRole") }}</option>
           </select>
         </div>
-        <button type="submit" class="btn btn-primary">Add</button>
+        <button type="submit" class="btn btn-primary">{{ t("admin.add") }}</button>
       </form>
     </div>
 
@@ -31,19 +31,19 @@
     <table class="admin-table">
       <thead>
         <tr>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Role</th>
-          <th>Created</th>
-          <th>Actions</th>
+          <th>{{ t("admin.name") }}</th>
+          <th>{{ t("admin.email") }}</th>
+          <th>{{ t("admin.role") }}</th>
+          <th>{{ t("admin.created") }}</th>
+          <th>{{ t("admin.actions") }}</th>
         </tr>
       </thead>
       <tbody>
         <tr v-if="loading">
-          <td colspan="5" style="text-align:center">Loading...</td>
+          <td colspan="5" style="text-align:center">{{ t("admin.loading") }}</td>
         </tr>
         <tr v-else-if="items.length === 0">
-          <td colspan="5" style="text-align:center">No users</td>
+          <td colspan="5" style="text-align:center">{{ t("admin.noUsers") }}</td>
         </tr>
         <tr v-for="user in items" :key="user.id">
           <td>{{ user.displayName }}</td>
@@ -53,9 +53,9 @@
           <td>
             <div style="display:flex; gap:0.5rem">
               <button class="btn" style="font-size:0.75rem; padding:0.25rem 0.5rem"
-                @click="openEdit(user)">Edit</button>
+                @click="openEdit(user)">{{ t("admin.edit") }}</button>
               <button class="btn" style="font-size:0.75rem; padding:0.25rem 0.5rem; color:#dc2626"
-                @click="deleteUser(user.id)">Delete</button>
+                @click="deleteUser(user.id)">{{ t("admin.delete") }}</button>
             </div>
           </td>
         </tr>
@@ -65,26 +65,26 @@
     <!-- Edit modal -->
     <div v-if="editUser" class="modal-overlay" @click.self="editUser = null">
       <div class="modal-card">
-        <h3>Edit User</h3>
+        <h3>{{ t("admin.editUser") }}</h3>
         <form @submit.prevent="saveEdit">
           <div class="form-group">
-            <label>Display Name</label>
+            <label>{{ t("admin.displayName") }}</label>
             <input v-model="editForm.displayName" required />
           </div>
           <div class="form-group">
-            <label>Role</label>
+            <label>{{ t("admin.role") }}</label>
             <select v-model="editForm.role">
-              <option value="editor">Editor</option>
-              <option value="admin">Admin</option>
+              <option value="editor">{{ t("admin.editor") }}</option>
+              <option value="admin">{{ t("admin.adminRole") }}</option>
             </select>
           </div>
           <div class="form-group">
-            <label>New Password (leave blank to keep)</label>
+            <label>{{ t("admin.newPassword") }}</label>
             <input v-model="editForm.password" type="password" placeholder="••••••" />
           </div>
           <div style="display:flex; gap:0.5rem; justify-content:flex-end">
-            <button type="button" class="btn" @click="editUser = null">Cancel</button>
-            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" class="btn" @click="editUser = null">{{ t("admin.cancelBtn") }}</button>
+            <button type="submit" class="btn btn-primary">{{ t("admin.save") }}</button>
           </div>
         </form>
       </div>
@@ -94,6 +94,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { t } from "../../i18n/index";
 
 const items = ref<any[]>([]);
 const loading = ref(true);
@@ -133,10 +134,10 @@ async function createUser() {
     const data = await res.json();
     if (data.success) {
       newUser.value = { email: "", displayName: "", password: "", role: "editor" };
-      if (typeof window.showToast === "function") window.showToast("User created!");
+      if (typeof window.showToast === "function") window.showToast(t("admin.userCreated"));
       loadData();
     } else {
-      if (typeof window.showToast === "function") window.showToast(data.error || "Failed to create user", "error");
+      if (typeof window.showToast === "function") window.showToast(data.error || t("admin.userCreateFailed"), "error");
     }
   } catch {}
 }
@@ -162,16 +163,16 @@ async function saveEdit() {
     const data = await res.json();
     if (data.success) {
       editUser.value = null;
-      if (typeof window.showToast === "function") window.showToast("User updated!");
+      if (typeof window.showToast === "function") window.showToast(t("admin.userUpdated"));
       loadData();
     } else {
-      if (typeof window.showToast === "function") window.showToast(data.error || "Failed to update user", "error");
+      if (typeof window.showToast === "function") window.showToast(data.error || t("admin.userUpdateFailed"), "error");
     }
   } catch {}
 }
 
 async function deleteUser(id: number) {
-  if (!confirm("Delete this user?")) return;
+  if (!confirm(t("admin.deleteUser"))) return;
   try {
     const res = await fetch(`/api/v1/admin/users/${id}`, {
       method: "DELETE",
@@ -179,10 +180,10 @@ async function deleteUser(id: number) {
     });
     const data = await res.json();
     if (data.success) {
-      if (typeof window.showToast === "function") window.showToast("User deleted!");
+      if (typeof window.showToast === "function") window.showToast(t("admin.userDeleted"));
       loadData();
     } else {
-      if (typeof window.showToast === "function") window.showToast(data.error || "Failed to delete user", "error");
+      if (typeof window.showToast === "function") window.showToast(data.error || t("admin.userDeleteFailed"), "error");
     }
   } catch {}
 }

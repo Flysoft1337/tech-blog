@@ -2,6 +2,10 @@
 import "../styles/global.css";
 import Header from "../components/blog/Header.astro";
 import Footer from "../components/blog/Footer.astro";
+import { t, initLocale, getLocale } from "../i18n/index";
+
+initLocale(Astro.request);
+const ssrLocale = getLocale();
 
 interface Props {
   title?: string;
@@ -11,8 +15,8 @@ interface Props {
 }
 
 const {
-  title = "Tech Blog",
-  description = "A personal tech blog",
+  title = t("site.name"),
+  description = t("site.description"),
   ogImage,
   ogType = "website",
 } = Astro.props;
@@ -21,11 +25,11 @@ const canonicalUrl = Astro.url.href;
 ---
 
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-locale={ssrLocale}>
   <head>
     <meta charset="utf-8" />
     <script is:inline>
-      (function(){var t=localStorage.getItem("theme")||(window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.setAttribute("data-theme",t)})();
+      (function(){var t=localStorage.getItem("theme")||(window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.setAttribute("data-theme",t);var l=localStorage.getItem("locale");if(l&&!document.cookie.match("locale="))document.cookie="locale="+l+";path=/;max-age=31536000";var cl=(document.cookie.match(/(?:^|;\s*)locale=([^;]*)/)||[])[1]||"zh-CN";var sl=document.documentElement.getAttribute("data-locale")||"zh-CN";if(cl!==sl&&!sessionStorage.getItem("_lr")){sessionStorage.setItem("_lr","1");location.reload()}else{sessionStorage.removeItem("_lr")}})();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
@@ -46,11 +50,11 @@ const canonicalUrl = Astro.url.href;
   </head>
   <body>
     <Header />
-    <main class="container" style="flex:1; padding-top:2rem; padding-bottom:3rem;">
+    <main class="container" style="flex:1; width:100%; padding-top:2rem; padding-bottom:3rem;">
       <slot />
     </main>
     <Footer />
-    <button id="back-to-top" class="back-to-top" aria-label="Back to top">&#8593;</button>
+    <button id="back-to-top" class="back-to-top" aria-label={t("backToTop")}>&#8593;</button>
   </body>
 </html>
 

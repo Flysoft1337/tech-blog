@@ -2,6 +2,9 @@
 export const prerender = false;
 
 import BlogLayout from "../layouts/BlogLayout.astro";
+import { t, initLocale } from "../i18n/index";
+
+initLocale(Astro.request);
 
 const API_BASE = import.meta.env.PUBLIC_API_URL || "http://localhost:3000";
 
@@ -28,7 +31,7 @@ const grouped: Record<string, any[]> = {};
 for (const post of posts) {
   const year = post.publishedAt
     ? new Date(post.publishedAt).getFullYear().toString()
-    : "Draft";
+    : t("archives.draft");
   if (!grouped[year]) grouped[year] = [];
   grouped[year].push(post);
 }
@@ -36,9 +39,9 @@ for (const post of posts) {
 const years = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
 ---
 
-<BlogLayout title="Archives - Tech Blog">
-  <h1 class="page-title">Archives</h1>
-  <p class="total-count">{posts.length} posts in total</p>
+<BlogLayout title={t("archives.title")}>
+  <h1 class="page-title">{t("archives.heading")}</h1>
+  <p class="total-count">{t("archives.totalPosts", { count: posts.length })}</p>
   {years.map((year) => (
     <section class="year-section">
       <h2 class="year-title">{year}</h2>

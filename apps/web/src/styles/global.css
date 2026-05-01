@@ -7,8 +7,8 @@
   --color-primary-hover: #1d4ed8;
   --color-border: #e5e7eb;
   --color-code-bg: #f1f5f9;
-  --max-width: 1200px;
-  --content-width: 800px;
+  --max-width: clamp(900px, 65vw, 1300px);
+  --content-width: min(800px, 90vw);
   --radius: 8px;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
@@ -118,7 +118,12 @@ img {
 }
 
 [data-theme="dark"] .prose .shiki {
-  background-color: #0d1117 !important;
+  background-color: #1e293b !important;
+  border-color: #475569;
+}
+
+[data-theme="dark"] .prose .shiki span {
+  color: var(--shiki-dark) !important;
 }
 
 .code-copy-btn {

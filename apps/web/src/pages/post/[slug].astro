@@ -4,6 +4,9 @@ export const prerender = false;
 import BlogLayout from "../../layouts/BlogLayout.astro";
 import TOC from "../../components/blog/TOC.astro";
 import CommentForm from "../../components/vue/CommentForm.vue";
+import { t, initLocale } from "../../i18n/index";
+
+initLocale(Astro.request);
 
 const { slug } = Astro.params;
 const API_BASE = import.meta.env.PUBLIC_API_URL || "http://localhost:3000";
@@ -44,7 +47,7 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
 ---
 
 <BlogLayout
-  title={`${post.title} - Tech Blog`}
+  title={`${post.title} - ${t("site.name")}`}
   description={post.excerpt}
   ogImage={post.coverImage}
   ogType="article"
@@ -61,7 +64,7 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
         <div class="post-meta">
           {post.author && <span>{post.author.displayName}</span>}
           {date && <time>{date}</time>}
-          <span>{readingTime} min read</span>
+          <span>{t("post.minRead", { n: readingTime })}</span>
         </div>
         {post.tags?.length > 0 && (
           <div class="post-tags">
@@ -87,7 +90,7 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
       <div class="post-nav-item prev">
         {post.prevPost && (
           <>
-            <span class="post-nav-label">Previous</span>
+            <span class="post-nav-label">{t("post.previous")}</span>
             <a href={`/post/${post.prevPost.slug}`}>{post.prevPost.title}</a>
           </>
         )}
@@ -95,7 +98,7 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
       <div class="post-nav-item next">
         {post.nextPost && (
           <>
-            <span class="post-nav-label">Next</span>
+            <span class="post-nav-label">{t("post.next")}</span>
             <a href={`/post/${post.nextPost.slug}`}>{post.nextPost.title}</a>
           </>
         )}
@@ -103,7 +106,7 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
     </nav>
   )}
   <section class="comments-section">
-    <h2>Comments</h2>
+    <h2>{t("post.comments")}</h2>
     <CommentForm client:visible slug={slug!} />
   </section>
 </BlogLayout>

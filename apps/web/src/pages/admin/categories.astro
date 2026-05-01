@@ -1,24 +1,28 @@
 ---
+export const prerender = false;
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import AdminTable from "../../components/vue/AdminTable.vue";
+import { t, initLocale } from "../../i18n/index";
+
+initLocale(Astro.request);
 ---
 
-<AdminLayout title="Categories">
+<AdminLayout title={t("admin.categories")}>
   <div class="admin-header">
-    <h1>Categories</h1>
+    <h1>{t("admin.categories")}</h1>
   </div>
   <AdminTable
     client:load
     endpoint="/api/v1/admin/categories"
     columns={[
-      { key: "name", label: "Name" },
-      { key: "slug", label: "Slug" },
-      { key: "postCount", label: "Posts" },
+      { key: "name", label: t("admin.name") },
+      { key: "slug", label: t("admin.slug") },
+      { key: "postCount", label: t("admin.posts") },
     ]}
     createFields={[
-      { key: "name", label: "Name", required: true },
-      { key: "slug", label: "Slug", required: true },
-      { key: "description", label: "Description" },
+      { key: "name", label: t("admin.name"), required: true },
+      { key: "slug", label: t("admin.slug"), required: true },
+      { key: "description", label: t("admin.description") },
     ]}
   />
 </AdminLayout>

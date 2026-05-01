@@ -4,6 +4,9 @@ export const prerender = false;
 import BlogLayout from "../../layouts/BlogLayout.astro";
 import PostCard from "../../components/blog/PostCard.astro";
 import Pagination from "../../components/common/Pagination.astro";
+import { t, initLocale } from "../../i18n/index";
+
+initLocale(Astro.request);
 
 const { slug } = Astro.params;
 const page = Number(Astro.url.searchParams.get("page")) || 1;
@@ -25,8 +28,8 @@ try {
 } catch {}
 ---
 
-<BlogLayout title={`${category?.name || slug} - Tech Blog`}>
-  <h1 class="page-title">Category: {category?.name || slug}</h1>
+<BlogLayout title={`${category?.name || slug} - ${t("site.name")}`}>
+  <h1 class="page-title">{t("category.title", { name: category?.name || slug })}</h1>
   {category?.description && <p class="page-desc">{category.description}</p>}
   <section class="posts-list">
     {posts.items.map((post: any) => (

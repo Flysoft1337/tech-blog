@@ -1,11 +1,13 @@
 ---
+export const prerender = false;
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import SettingsForm from "../../components/vue/SettingsForm.vue";
+import { t } from "../../i18n/index";
 ---
 
-<AdminLayout title="Settings">
+<AdminLayout title={t("admin.settings")}>
   <div class="admin-header">
-    <h1>Settings</h1>
+    <h1>{t("admin.settings")}</h1>
   </div>
   <SettingsForm client:load />
 </AdminLayout>

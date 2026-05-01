@@ -1,6 +1,10 @@
 ---
 import "../styles/global.css";
 import "../styles/admin.css";
+import { t, initLocale, getLocale } from "../i18n/index";
+
+initLocale(Astro.request);
+const ssrLocale = getLocale();
 
 interface Props {
   title?: string;
@@ -10,33 +14,36 @@ const { title = "Admin" } = Astro.props;
 const currentPath = Astro.url.pathname;
 
 const navItems = [
-  { href: "/admin", label: "Dashboard", icon: "📊" },
-  { href: "/admin/posts", label: "Posts", icon: "📝" },
-  { href: "/admin/categories", label: "Categories", icon: "📂" },
-  { href: "/admin/tags", label: "Tags", icon: "🏷" },
-  { href: "/admin/comments", label: "Comments", icon: "💬" },
-  { href: "/admin/media", label: "Media", icon: "🖼" },
-  { href: "/admin/users", label: "Users", icon: "👥" },
-  { href: "/admin/settings", label: "Settings", icon: "⚙" },
+  { href: "/admin", label: t("admin.dashboard"), icon: "📊" },
+  { href: "/admin/posts", label: t("admin.posts"), icon: "📝" },
+  { href: "/admin/categories", label: t("admin.categories"), icon: "📂" },
+  { href: "/admin/tags", label: t("admin.tags"), icon: "🏷" },
+  { href: "/admin/comments", label: t("admin.comments"), icon: "💬" },
+  { href: "/admin/media", label: t("admin.media"), icon: "🖼" },
+  { href: "/admin/users", label: t("admin.users"), icon: "👥" },
+  { href: "/admin/settings", label: t("admin.settings"), icon: "⚙" },
 ];
 ---
 
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-locale={ssrLocale}>
   <head>
     <meta charset="utf-8" />
+    <script is:inline>
+      (function(){var t=localStorage.getItem("theme")||(window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.setAttribute("data-theme",t);var l=localStorage.getItem("locale");if(l&&!document.cookie.match("locale="))document.cookie="locale="+l+";path=/;max-age=31536000";var cl=(document.cookie.match(/(?:^|;\s*)locale=([^;]*)/)||[])[1]||"zh-CN";var sl=document.documentElement.getAttribute("data-locale")||"zh-CN";if(cl!==sl&&!sessionStorage.getItem("_lr")){sessionStorage.setItem("_lr","1");location.reload()}else{sessionStorage.removeItem("_lr")}})();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title} - Admin</title>
     <meta name="robots" content="noindex, nofollow" />
   </head>
   <body>
     <div class="admin-layout">
-      <button class="admin-menu-toggle" id="admin-menu-toggle" aria-label="Toggle sidebar">
+      <button class="admin-menu-toggle" id="admin-menu-toggle" aria-label={t("admin.toggleSidebar")}>
         <span></span><span></span><span></span>
       </button>
       <div class="admin-sidebar-overlay" id="admin-sidebar-overlay"></div>
       <aside class="admin-sidebar" id="admin-sidebar">
-        <h2><a href="/admin">Tech Blog</a></h2>
+        <h2><a href="/admin">{t("site.name")}</a></h2>
         <nav class="admin-nav">
           {navItems.map((item) => (
             <a
@@ -51,11 +58,11 @@ const navItems = [
           <div class="nav-user" id="nav-user"></div>
           <a href="/">
             <span class="nav-icon">🌐</span>
-            View Site
+            {t("admin.viewSite")}
           </a>
           <a href="#" id="logout-btn" class="logout-link">
             <span class="nav-icon">🚪</span>
-            Logout
+            {t("admin.logout")}
           </a>
         </nav>
       </aside>

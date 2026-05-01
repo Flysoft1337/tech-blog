@@ -1,12 +1,16 @@
 ---
+export const prerender = false;
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import PostList from "../../../components/vue/PostList.vue";
+import { t, initLocale } from "../../../i18n/index";
+
+initLocale(Astro.request);
 ---
 
-<AdminLayout title="Posts">
+<AdminLayout title={t("admin.posts")}>
   <div class="admin-header">
-    <h1>Posts</h1>
-    <a href="/admin/posts/new" class="btn btn-primary">New Post</a>
+    <h1>{t("admin.posts")}</h1>
+    <a href="/admin/posts/new" class="btn btn-primary">{t("admin.newPost")}</a>
   </div>
   <PostList client:load />
 </AdminLayout>

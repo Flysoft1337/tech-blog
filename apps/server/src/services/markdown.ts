@@ -93,6 +93,7 @@ export async function renderMarkdown(content: string): Promise<string> {
         "font-style": [/.*/],
         "font-weight": [/.*/],
         "text-decoration": [/.*/],
+        "--shiki-dark": [/.*/],
       },
       pre: {
         background: [/.*/],

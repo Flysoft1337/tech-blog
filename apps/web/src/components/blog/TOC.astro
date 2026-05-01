@@ -1,4 +1,6 @@
 ---
+import { t } from "../../i18n/index";
+
 interface Heading {
   depth: number;
   slug: string;
@@ -15,7 +17,7 @@ const filtered = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
 
 {filtered.length > 0 && (
   <nav class="toc">
-    <h3>Table of Contents</h3>
+    <h3>{t("post.toc")}</h3>
     <ul>
       {filtered.map((heading) => (
         <li class:list={[`depth-${heading.depth}`]}>

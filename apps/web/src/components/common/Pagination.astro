@@ -1,4 +1,6 @@
 ---
+import { t } from "../../i18n/index";
+
 interface Props {
   currentPage: number;
   totalPages: number;
@@ -25,7 +27,7 @@ const pages = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPag
 {totalPages > 1 && (
   <nav class="pagination">
     {currentPage > 1 && (
-      <a href={pageUrl(currentPage - 1)} class="page-link prev">Prev</a>
+      <a href={pageUrl(currentPage - 1)} class="page-link prev">{t("pagination.prev")}</a>
     )}
     {startPage > 1 && (
       <>
@@ -47,7 +49,7 @@ const pages = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPag
       </>
     )}
     {currentPage < totalPages && (
-      <a href={pageUrl(currentPage + 1)} class="page-link next">Next</a>
+      <a href={pageUrl(currentPage + 1)} class="page-link next">{t("pagination.next")}</a>
     )}
   </nav>
 )}

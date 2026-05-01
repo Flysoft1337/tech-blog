@@ -2,6 +2,9 @@
 export const prerender = false;
 
 import BlogLayout from "../layouts/BlogLayout.astro";
+import { t, initLocale } from "../i18n/index";
+
+initLocale(Astro.request);
 
 const API_BASE = import.meta.env.PUBLIC_API_URL || "http://localhost:3000";
 
@@ -16,8 +19,8 @@ try {
 tags.sort((a: any, b: any) => b.postCount - a.postCount);
 ---
 
-<BlogLayout title="Tags - Tech Blog">
-  <h1 class="page-title">Tags</h1>
+<BlogLayout title={t("tags.title")}>
+  <h1 class="page-title">{t("tags.heading")}</h1>
   {tags.length > 0 ? (
     <div class="tags-cloud">
       {tags.map((tag: any) => (
@@ -28,7 +31,7 @@ tags.sort((a: any, b: any) => b.postCount - a.postCount);
       ))}
     </div>
   ) : (
-    <p class="empty">No tags yet.</p>
+    <p class="empty">{t("tags.empty")}</p>
   )}
 </BlogLayout>
 

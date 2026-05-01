@@ -3,8 +3,8 @@
     <!-- Upload area -->
     <div class="admin-card upload-area" @dragover.prevent @drop.prevent="handleDrop">
       <input type="file" ref="fileInput" @change="handleFileSelect" accept="image/*,video/*,application/pdf" multiple style="display:none" />
-      <p>Drag files here or <a href="#" @click.prevent="fileInput?.click()">browse</a></p>
-      <p v-if="uploading" style="margin-top:0.5rem; color:var(--color-text-secondary)">Uploading...</p>
+      <p><a href="#" @click.prevent="fileInput?.click()">{{ t("admin.dragFiles") }}</a></p>
+      <p v-if="uploading" style="margin-top:0.5rem; color:var(--color-text-secondary)">{{ t("admin.uploading") }}</p>
     </div>
 
     <!-- Media grid -->
@@ -19,22 +19,23 @@
           <span class="media-size">{{ formatSize(item.size) }}</span>
         </div>
         <div class="media-actions">
-          <button class="btn" style="font-size:0.75rem; padding:0.2rem 0.4rem" @click="copyUrl(item.url)">Copy URL</button>
-          <button class="btn" style="font-size:0.75rem; padding:0.2rem 0.4rem; color:#dc2626" @click="deleteItem(item.id)">Delete</button>
+          <button class="btn" style="font-size:0.75rem; padding:0.2rem 0.4rem" @click="copyUrl(item.url)">{{ t("admin.copyUrl") }}</button>
+          <button class="btn" style="font-size:0.75rem; padding:0.2rem 0.4rem; color:#dc2626" @click="deleteItem(item.id)">{{ t("admin.delete") }}</button>
         </div>
       </div>
     </div>
 
     <div v-if="totalPages > 1" class="pagination">
-      <button v-if="page > 1" class="btn" @click="page--; loadData()">Prev</button>
+      <button v-if="page > 1" class="btn" @click="page--; loadData()">{{ t("admin.prev") }}</button>
       <span>{{ page }} / {{ totalPages }}</span>
-      <button v-if="page < totalPages" class="btn" @click="page++; loadData()">Next</button>
+      <button v-if="page < totalPages" class="btn" @click="page++; loadData()">{{ t("admin.next") }}</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { t } from "../../i18n/index";
 
 const items = ref<any[]>([]);
 const page = ref(1);
@@ -81,7 +82,7 @@ async function handleFileSelect(e: Event) {
     await uploadFile(file);
   }
   uploading.value = false;
-  if (typeof window.showToast === "function") window.showToast("Upload complete!");
+  if (typeof window.showToast === "function") window.showToast(t("admin.uploadComplete"));
   loadData();
 }
 
@@ -93,12 +94,12 @@ async function handleDrop(e: DragEvent) {
     await uploadFile(file);
   }
   uploading.value = false;
-  if (typeof window.showToast === "function") window.showToast("Upload complete!");
+  if (typeof window.showToast === "function") window.showToast(t("admin.uploadComplete"));
   loadData();
 }
 
 async function deleteItem(id: number) {
-  if (!confirm("Delete this file?")) return;
+  if (!confirm(t("admin.deleteFile"))) return;
   await fetch(`/api/v1/admin/media/${id}`, {
     method: "DELETE",
     headers: getHeaders(),
@@ -108,7 +109,7 @@ async function deleteItem(id: number) {
 
 function copyUrl(url: string) {
   navigator.clipboard.writeText(window.location.origin + url);
-  if (typeof window.showToast === "function") window.showToast("URL copied!");
+  if (typeof window.showToast === "function") window.showToast(t("admin.urlCopied"));
 }
 
 onMounted(loadData);

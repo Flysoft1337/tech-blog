@@ -1,11 +1,15 @@
 ---
+export const prerender = false;
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import MediaUploader from "../../components/vue/MediaUploader.vue";
+import { t, initLocale } from "../../i18n/index";
+
+initLocale(Astro.request);
 ---
 
-<AdminLayout title="Media">
+<AdminLayout title={t("admin.media")}>
   <div class="admin-header">
-    <h1>Media</h1>
+    <h1>{t("admin.media")}</h1>
   </div>
   <MediaUploader client:load />
 </AdminLayout>

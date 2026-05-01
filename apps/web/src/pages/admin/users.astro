@@ -1,11 +1,15 @@
 ---
+export const prerender = false;
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import UserManager from "../../components/vue/UserManager.vue";
+import { t, initLocale } from "../../i18n/index";
+
+initLocale(Astro.request);
 ---
 
-<AdminLayout title="Users">
+<AdminLayout title={t("admin.users")}>
   <div class="admin-header">
-    <h1>Users</h1>
+    <h1>{t("admin.users")}</h1>
   </div>
   <UserManager client:load />
 </AdminLayout>

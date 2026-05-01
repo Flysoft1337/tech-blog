@@ -4,65 +4,65 @@
       <div class="editor-grid">
         <div class="editor-main">
           <div class="form-group">
-            <label>Title</label>
+            <label>{{ t("editor.title") }}</label>
             <input v-model="form.title" required @input="generateSlug" />
           </div>
           <div class="form-group">
-            <label>Slug</label>
+            <label>{{ t("editor.slug") }}</label>
             <input v-model="form.slug" required />
           </div>
           <div class="form-group">
             <div class="content-header">
-              <label>Content (Markdown)</label>
+              <label>{{ t("editor.content") }}</label>
               <div class="content-actions">
                 <div v-if="!showPreview" class="md-toolbar">
-                  <button type="button" title="Bold" @click="wrapSelection('**', '**')"><b>B</b></button>
-                  <button type="button" title="Italic" @click="wrapSelection('*', '*')"><i>I</i></button>
-                  <button type="button" title="Code" @click="wrapSelection('`', '`')"><code>{'<>'}</code></button>
-                  <button type="button" title="Link" @click="insertLink">Link</button>
-                  <button type="button" title="Image" @click="insertImage">Img</button>
-                  <button type="button" title="Heading" @click="insertAtLineStart('## ')">H2</button>
-                  <button type="button" title="List" @click="insertAtLineStart('- ')">List</button>
-                  <button type="button" title="Code Block" @click="wrapSelection('\n```\n', '\n```\n')">Block</button>
+                  <button type="button" :title="t('editor.bold')" @click="wrapSelection('**', '**')"><b>B</b></button>
+                  <button type="button" :title="t('editor.italic')" @click="wrapSelection('*', '*')"><i>I</i></button>
+                  <button type="button" :title="t('editor.code')" @click="wrapSelection('`', '`')"><code>{'<>'}</code></button>
+                  <button type="button" :title="t('editor.link')" @click="insertLink">Link</button>
+                  <button type="button" :title="t('editor.image')" @click="insertImage">Img</button>
+                  <button type="button" :title="t('editor.heading')" @click="insertAtLineStart('## ')">H2</button>
+                  <button type="button" :title="t('editor.list')" @click="insertAtLineStart('- ')">List</button>
+                  <button type="button" :title="t('editor.codeBlock')" @click="wrapSelection('\n```\n', '\n```\n')">Block</button>
                 </div>
                 <button type="button" class="btn preview-toggle" @click="showPreview = !showPreview">
-                  {{ showPreview ? "Edit" : "Preview" }}
+                  {{ showPreview ? t("editor.editMode") : t("editor.preview") }}
                 </button>
               </div>
             </div>
             <div v-if="showPreview" class="preview-pane prose" v-html="previewHtml"></div>
             <textarea v-else ref="contentArea" v-model="form.content" rows="20" style="font-family:monospace; font-size:0.9rem"
               @keydown.tab.prevent="insertTab"></textarea>
-            <div class="word-count">{{ form.content.length }} chars</div>
+            <div class="word-count">{{ t("editor.chars", { count: form.content.length }) }}</div>
           </div>
           <div class="form-group">
-            <label>Excerpt</label>
+            <label>{{ t("editor.excerpt") }}</label>
             <textarea v-model="form.excerpt" rows="3"></textarea>
           </div>
         </div>
         <div class="editor-sidebar">
           <div class="admin-card">
             <div class="form-group">
-              <label>Status</label>
+              <label>{{ t("editor.statusLabel") }}</label>
               <select v-model="form.status">
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
+                <option value="draft">{{ t("editor.draft") }}</option>
+                <option value="published">{{ t("editor.publishedStatus") }}</option>
               </select>
             </div>
             <div class="form-group">
               <label>
-                <input type="checkbox" v-model="form.pinned" /> Pin this post
+                <input type="checkbox" v-model="form.pinned" /> {{ t("editor.pinPost") }}
               </label>
             </div>
             <div class="form-group">
-              <label>Category</label>
+              <label>{{ t("editor.categoryLabel") }}</label>
               <select v-model="form.categoryId">
-                <option :value="undefined">None</option>
+                <option :value="undefined">{{ t("editor.none") }}</option>
                 <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
               </select>
             </div>
             <div class="form-group">
-              <label>Tags</label>
+              <label>{{ t("editor.tagsLabel") }}</label>
               <div class="tag-select">
                 <label v-for="tag in tags" :key="tag.id" class="tag-option">
                   <input type="checkbox" :value="tag.id" v-model="form.tagIds" />
@@ -71,11 +71,11 @@
               </div>
             </div>
             <div class="form-group">
-              <label>Cover Image URL</label>
+              <label>{{ t("editor.coverImage") }}</label>
               <input v-model="form.coverImage" placeholder="/uploads/..." />
             </div>
             <button type="submit" class="btn btn-primary" style="width:100%" :disabled="loading">
-              {{ loading ? "Saving..." : "Save" }}
+              {{ loading ? t("editor.saving") : t("editor.saveBtn") }}
             </button>
             <p v-if="message" :class="success ? 'success-msg' : 'error-msg'" style="margin-top:0.5rem; font-size:0.85rem">
               {{ message }}
@@ -83,10 +83,10 @@
           </div>
           <div class="admin-card" style="margin-top:1rem">
             <div class="form-group" style="margin-bottom:0">
-              <label style="margin-bottom:0.5rem">Keyboard Shortcuts</label>
+              <label style="margin-bottom:0.5rem">{{ t("editor.shortcuts") }}</label>
               <ul class="shortcuts-list">
-                <li><kbd>Tab</kbd> Insert indent</li>
-                <li><kbd>Ctrl+S</kbd> Save post</li>
+                <li><kbd>Tab</kbd> {{ t("editor.insertIndent") }}</li>
+                <li><kbd>Ctrl+S</kbd> {{ t("editor.savePost") }}</li>
               </ul>
             </div>
           </div>
@@ -97,7 +97,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from "vue";
+import { ref, onMounted, onUnmounted, watch, computed } from "vue";
+import { t } from "../../i18n/index";
 
 const props = defineProps<{ postId?: string }>();
 
@@ -112,6 +113,20 @@ const form = ref({
   categoryId: undefined as number | undefined,
   tagIds: [] as number[],
 });
+
+const savedSnapshot = ref("");
+const isDirty = computed(() => JSON.stringify(form.value) !== savedSnapshot.value);
+
+function takeSnapshot() {
+  savedSnapshot.value = JSON.stringify(form.value);
+}
+
+function handleBeforeUnload(e: BeforeUnloadEvent) {
+  if (isDirty.value) {
+    e.preventDefault();
+    e.returnValue = "";
+  }
+}
 
 const categories = ref<any[]>([]);
 const tags = ref<any[]>([]);
@@ -144,7 +159,7 @@ async function renderPreview() {
       const data = await res.json();
       if (data.success) previewHtml.value = data.data.html;
     } catch {
-      previewHtml.value = "<p style='color:#dc2626'>Preview failed</p>";
+      previewHtml.value = `<p style='color:#dc2626'>${t("editor.previewFailed")}</p>`;
     }
   }, 300);
 }
@@ -257,10 +272,11 @@ async function loadData() {
         status: p.status,
         pinned: p.pinned,
         categoryId: p.categoryId || undefined,
-        tagIds: (p.tags || []).map((t: any) => t.id),
+        tagIds: (p.tags || []).map((tag: any) => tag.id),
       };
     }
   }
+  takeSnapshot();
 }
 
 async function savePost() {
@@ -282,18 +298,19 @@ async function savePost() {
 
     if (data.success) {
       success.value = true;
-      message.value = "Saved!";
-      if (typeof window.showToast === "function") window.showToast("Post saved!");
+      message.value = t("editor.saved");
+      takeSnapshot();
+      if (typeof window.showToast === "function") window.showToast(t("editor.postSaved"));
       if (!props.postId && data.data?.id) {
         window.location.href = `/admin/posts/${data.data.id}`;
       }
     } else {
       success.value = false;
-      message.value = data.error || "Failed to save";
+      message.value = data.error || t("editor.saveFailed");
     }
   } catch {
     success.value = false;
-    message.value = "Network error";
+    message.value = t("admin.networkError");
   } finally {
     loading.value = false;
   }
@@ -302,10 +319,12 @@ async function savePost() {
 onMounted(() => {
   loadData();
   document.addEventListener("keydown", handleKeydown);
+  window.addEventListener("beforeunload", handleBeforeUnload);
 });
 
 onUnmounted(() => {
   document.removeEventListener("keydown", handleKeydown);
+  window.removeEventListener("beforeunload", handleBeforeUnload);
 });
 </script>
 
