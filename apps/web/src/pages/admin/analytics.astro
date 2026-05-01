@@ -1,0 +1,110 @@
+---
+export const prerender = false;
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { t, initLocale } from "../../i18n/index";
+
+initLocale(Astro.request);
+---
+
+<AdminLayout title={t("admin.analytics")}>
+  <div class="admin-header">
+    <h1>{t("admin.analytics")}</h1>
+  </div>
+  <div class="stats-grid" id="analytics-stats">
+    <div class="stat-card">
+      <div class="label">{t("admin.totalViews")}</div>
+      <div class="value" id="total-views">-</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">{t("admin.recentComments7d")}</div>
+      <div class="value" id="recent-comments">-</div>
+    </div>
+  </div>
+  <div class="admin-card">
+    <h3>{t("admin.topPosts")}</h3>
+    <table class="admin-table" style="margin-top:1rem">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>{t("admin.title")}</th>
+          <th>{t("admin.views")}</th>
+        </tr>
+      </thead>
+      <tbody id="top-posts">
+        <tr><td colspan="3" style="text-align:center">{t("admin.loading")}</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="admin-card" style="margin-top:1rem">
+    <h3>{t("admin.publishHistory")}</h3>
+    <div id="publish-chart" class="chart-bars"></div>
+  </div>
+</AdminLayout>
+
+<script>
+  async function loadAnalytics() {
+    const token = localStorage.getItem("accessToken");
+    const res = await fetch("/api/v1/admin/posts/stats", {
+      headers: { Authorization: "Bearer " + token },
+    });
+    const data = await res.json();
+    if (!data.success) return;
+
+    document.getElementById("total-views")!.textContent = data.data.totalViews.toString();
+    document.getElementById("recent-comments")!.textContent = data.data.recentComments.toString();
+
+    const tbody = document.getElementById("top-posts")!;
+    if (data.data.topViewed.length) {
+      tbody.innerHTML = data.data.topViewed.map((p: any, i: number) =>
+        `<tr><td>${i+1}</td><td><a href="/admin/posts/${p.id}">${p.title}</a></td><td>${p.viewCount}</td></tr>`
+      ).join("");
+    } else {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center">No data</td></tr>';
+    }
+
+    const chart = document.getElementById("publish-chart")!;
+    if (data.data.postsByMonth.length) {
+      const max = Math.max(...data.data.postsByMonth.map((m: any) => m.count));
+      chart.innerHTML = data.data.postsByMonth.reverse().map((m: any) =>
+        `<div class="chart-bar-row"><span class="chart-label">${m.month}</span><div class="chart-bar" style="width:${max>0?(m.count/max*100):0}%"><span>${m.count}</span></div></div>`
+      ).join("");
+    }
+  }
+  loadAnalytics();
+</script>
+
+<style>
+  .chart-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  .chart-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .chart-label {
+    width: 70px;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .chart-bar {
+    height: 28px;
+    background: var(--color-primary);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    padding: 0 0.5rem;
+    min-width: 30px;
+    transition: width 0.3s;
+  }
+  .chart-bar span {
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+</style>

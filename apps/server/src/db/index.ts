@@ -107,6 +107,13 @@ export async function initDatabase() {
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS post_likes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+      ip TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
 
   await seedDefaults();
@@ -117,6 +124,8 @@ export async function initDatabase() {
     "ALTER TABLE posts ADD COLUMN series_id INTEGER REFERENCES series(id) ON DELETE SET NULL",
     "ALTER TABLE posts ADD COLUMN series_order INTEGER",
     "ALTER TABLE posts ADD COLUMN scheduled_at TEXT",
+    "ALTER TABLE users ADD COLUMN bio TEXT",
+    "ALTER TABLE users ADD COLUMN website TEXT",
   ];
   for (const m of migrations) {
     try { await client.execute(m); } catch {}

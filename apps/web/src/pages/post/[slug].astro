@@ -85,6 +85,7 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
           {date && <time>{date}</time>}
           <span>{t("post.minRead", { n: readingTime })}</span>
           <span>{t("post.views", { n: post.viewCount || 0 })}</span>
+          <span class="like-count" id="like-count">{post.likeCount || 0}</span>
         </div>
         {post.tags?.length > 0 && (
           <div class="post-tags">
@@ -125,6 +126,12 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
       </div>
     </nav>
   )}
+  <div class="share-bar">
+    <span class="share-label">{t("post.share")}</span>
+    <a class="share-btn twitter" href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(Astro.url.href)}`} target="_blank" rel="noopener" title="Twitter">𝕏</a>
+    <a class="share-btn facebook" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(Astro.url.href)}`} target="_blank" rel="noopener" title="Facebook">f</a>
+    <button class="share-btn copy-link" id="copy-link-btn" title={t("post.copyLink")}>🔗</button>
+  </div>
   {post.relatedPosts?.length > 0 && (
     <section class="related-section">
       <h2>{t("post.relatedPosts")}</h2>
@@ -145,6 +152,19 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
     <h2>{t("post.comments")}</h2>
     <CommentForm client:visible slug={slug!} />
   </section>
+  {post.author?.bio && (
+    <section class="author-card">
+      <div class="author-avatar">
+        {post.author.avatar ? <img src={post.author.avatar} alt={post.author.displayName} /> : <div class="avatar-placeholder">{post.author.displayName[0]}</div>}
+      </div>
+      <div class="author-info">
+        <h3>{post.author.displayName}</h3>
+        <p>{post.author.bio}</p>
+        {post.author.website && <a href={post.author.website} target="_blank" rel="noopener">{post.author.website}</a>}
+      </div>
+    </section>
+  )}
+  <button class="like-btn" id="like-btn" aria-label="Like">♡ <span id="like-text">{post.likeCount || 0}</span></button>
 </BlogLayout>
 
 <script>
@@ -178,6 +198,32 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
       bar.style.width = pct + "%";
     });
   })();
+</script>
+
+<script is:inline>
+(function(){var b=document.getElementById("copy-link-btn");if(b)b.addEventListener("click",function(){navigator.clipboard.writeText(window.location.href).then(function(){b.textContent="✓";setTimeout(function(){b.textContent="🔗"},2000)})})})();
+</script>
+
+<script is:inline>
+(function(){
+  var btn=document.getElementById("like-btn");
+  var slug=window.location.pathname.split("/post/")[1];
+  if(!btn||!slug)return;
+  fetch("/api/v1/posts/"+slug+"/likes").then(function(r){return r.json()}).then(function(d){
+    if(d.success){
+      btn.querySelector("span").textContent=d.data.count;
+      if(d.data.liked)btn.classList.add("liked");
+    }
+  });
+  btn.addEventListener("click",function(){
+    fetch("/api/v1/posts/"+slug+"/like",{method:"POST"}).then(function(r){return r.json()}).then(function(d){
+      if(d.success){
+        btn.querySelector("span").textContent=d.data.count;
+        btn.classList.toggle("liked",d.data.liked);
+      }
+    });
+  });
+})();
 </script>
 
 <style>
@@ -369,5 +415,94 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+  .share-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+  }
+  .share-label {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+  }
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .share-btn:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+  .author-card {
+    display: flex;
+    gap: 1.25rem;
+    margin-top: 3rem;
+    padding: 1.5rem;
+    background: var(--color-bg-secondary);
+    border-radius: 12px;
+  }
+  .author-avatar img, .avatar-placeholder {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  .avatar-placeholder {
+    background: var(--color-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+  .author-info h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+  }
+  .author-info p {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+  }
+  .author-info a {
+    font-size: 0.85rem;
+  }
+  .like-btn {
+    position: fixed;
+    bottom: 2rem;
+    left: 2rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    background: var(--color-bg);
+    color: var(--color-text-secondary);
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: all 0.2s;
+    z-index: 50;
+  }
+  .like-btn:hover, .like-btn.liked {
+    border-color: #ef4444;
+    color: #ef4444;
+  }
+  .like-btn.liked {
+    background: #fef2f2;
   }
 </style>

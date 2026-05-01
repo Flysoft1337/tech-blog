@@ -9,6 +9,7 @@ import {
   users,
   settings,
   series,
+  postLikes,
 } from "../db/schema.js";
 import { eq, desc, asc, and, sql, like, or, gt, lt } from "drizzle-orm";
 import sanitizeHtml from "sanitize-html";
@@ -115,7 +116,7 @@ export default async function publicRoutes(app: FastifyInstance) {
 
     // Parallel queries for post details
     const [author, category, postTagRows, prevPost, nextPost] = await Promise.all([
-      db.select({ displayName: users.displayName }).from(users).where(eq(users.id, post.authorId)).get(),
+      db.select({ id: users.id, displayName: users.displayName, avatar: users.avatar, bio: users.bio, website: users.website }).from(users).where(eq(users.id, post.authorId)).get(),
       post.categoryId
         ? db.select({ id: categories.id, name: categories.name, slug: categories.slug }).from(categories).where(eq(categories.id, post.categoryId)).get()
         : Promise.resolve(undefined),
@@ -182,12 +183,16 @@ export default async function publicRoutes(app: FastifyInstance) {
         .all();
     }
 
+    // Like count
+    const [{ likeCount }] = await db.select({ likeCount: sql<number>`count(*)` }).from(postLikes).where(eq(postLikes.postId, post.id)).all();
+
     return {
       success: true,
       data: {
         ...post,
         viewCount: (post.viewCount || 0) + 1,
-        author: author ? { displayName: author.displayName } : undefined,
+        likeCount,
+        author: author || undefined,
         category,
         tags: tagList,
         prevPost: prevPost || null,
@@ -345,5 +350,62 @@ export default async function publicRoutes(app: FastifyInstance) {
       }
     }
     return { success: true, data };
+  });
+
+  // Like a post
+  app.post<{ Params: { slug: string } }>("/posts/:slug/like", {
+    config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
+  }, async (request, reply) => {
+    const post = await db.select({ id: posts.id }).from(posts)
+      .where(and(eq(posts.slug, request.params.slug), eq(posts.status, "published"))).get();
+    if (!post) return reply.status(404).send({ success: false, error: "Post not found" });
+
+    const ip = request.ip;
+    const existing = await db.select().from(postLikes)
+      .where(and(eq(postLikes.postId, post.id), eq(postLikes.ip, ip))).get();
+
+    if (existing) {
+      await db.delete(postLikes).where(eq(postLikes.id, existing.id)).run();
+      const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(postLikes).where(eq(postLikes.postId, post.id)).all();
+      return { success: true, data: { liked: false, count } };
+    }
+
+    await db.insert(postLikes).values({ postId: post.id, ip }).run();
+    const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(postLikes).where(eq(postLikes.postId, post.id)).all();
+    return { success: true, data: { liked: true, count } };
+  });
+
+  // Get like status
+  app.get<{ Params: { slug: string } }>("/posts/:slug/likes", async (request, reply) => {
+    const post = await db.select({ id: posts.id }).from(posts)
+      .where(and(eq(posts.slug, request.params.slug), eq(posts.status, "published"))).get();
+    if (!post) return reply.status(404).send({ success: false, error: "Post not found" });
+
+    const ip = request.ip;
+    const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(postLikes).where(eq(postLikes.postId, post.id)).all();
+    const liked = await db.select().from(postLikes)
+      .where(and(eq(postLikes.postId, post.id), eq(postLikes.ip, ip))).get();
+    return { success: true, data: { liked: !!liked, count } };
+  });
+
+  // Author profile
+  app.get<{ Params: { id: string } }>("/authors/:id", async (request, reply) => {
+    const author = await db.select({
+      id: users.id,
+      displayName: users.displayName,
+      avatar: users.avatar,
+      bio: users.bio,
+      website: users.website,
+    }).from(users).where(eq(users.id, Number(request.params.id))).get();
+    if (!author) return reply.status(404).send({ success: false, error: "Author not found" });
+
+    const authorPosts = await db.select({
+      id: posts.id, title: posts.title, slug: posts.slug,
+      excerpt: posts.excerpt, coverImage: posts.coverImage, publishedAt: posts.publishedAt,
+    }).from(posts)
+      .where(and(eq(posts.authorId, author.id), eq(posts.status, "published")))
+      .orderBy(desc(posts.publishedAt)).limit(20).all();
+
+    return { success: true, data: { ...author, posts: authorPosts } };
   });
 }

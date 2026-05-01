@@ -18,6 +18,8 @@ export const users = sqliteTable("users", {
   displayName: text("display_name").notNull(),
   role: text("role", { enum: ["admin", "editor"] }).notNull().default("editor"),
   avatar: text("avatar"),
+  bio: text("bio"),
+  website: text("website"),
   ...timestamps,
 });
 
@@ -115,4 +117,15 @@ export const media = sqliteTable("media", {
 export const settings = sqliteTable("settings", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),
+});
+
+export const postLikes = sqliteTable("post_likes", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  postId: integer("post_id")
+    .notNull()
+    .references(() => posts.id, { onDelete: "cascade" }),
+  ip: text("ip").notNull(),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
 });

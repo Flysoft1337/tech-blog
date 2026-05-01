@@ -10,7 +10,33 @@ initLocale(Astro.request);
 <AdminLayout title={t("admin.posts")}>
   <div class="admin-header">
     <h1>{t("admin.posts")}</h1>
-    <a href="/admin/posts/new" class="btn btn-primary">{t("admin.newPost")}</a>
+    <div style="display:flex;gap:0.5rem">
+      <button id="export-posts-btn" class="btn btn-secondary">{t("admin.exportPosts")}</button>
+      <a href="/admin/posts/new" class="btn btn-primary">{t("admin.newPost")}</a>
+    </div>
   </div>
   <PostList client:load />
 </AdminLayout>
+
+<script is:inline>
+(function(){
+  var btn=document.getElementById("export-posts-btn");
+  if(!btn)return;
+  btn.addEventListener("click",function(){
+    var token=localStorage.getItem("accessToken");
+    fetch("/api/v1/admin/posts/export",{headers:{Authorization:"Bearer "+token}})
+      .then(function(r){return r.json()})
+      .then(function(data){
+        var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+        var url=URL.createObjectURL(blob);
+        var a=document.createElement("a");
+        a.href=url;
+        a.download="posts-export.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+  });
+})();
+</script>

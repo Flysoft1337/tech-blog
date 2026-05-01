@@ -47,6 +47,9 @@ const translations: Record<Locale, Record<string, string>> = {
     "post.views": "{n} 次阅读",
     "post.relatedPosts": "相关文章",
     "post.series": "系列文章",
+    "post.share": "分享",
+    "post.copyLink": "复制链接",
+    "post.like": "点赞",
 
     // Comment
     "comment.noComments": "暂无评论，来做第一个留言的人！",
@@ -269,6 +272,15 @@ const translations: Record<Locale, Record<string, string>> = {
     "admin.language": "界面语言",
     "admin.langZh": "中文",
     "admin.langEn": "English",
+
+    // Analytics
+    "admin.analytics": "数据分析",
+    "admin.totalViews": "总浏览量",
+    "admin.recentComments7d": "近7天评论",
+    "admin.topPosts": "热门文章",
+    "admin.views": "浏览量",
+    "admin.publishHistory": "发布趋势",
+    "admin.exportPosts": "导出文章",
   },
   en: {
     // Nav
@@ -314,6 +326,9 @@ const translations: Record<Locale, Record<string, string>> = {
     "post.views": "{n} views",
     "post.relatedPosts": "Related Posts",
     "post.series": "Series",
+    "post.share": "Share",
+    "post.copyLink": "Copy link",
+    "post.like": "Like",
 
     // Comment
     "comment.noComments": "No comments yet. Be the first!",
@@ -536,6 +551,15 @@ const translations: Record<Locale, Record<string, string>> = {
     "admin.language": "Language",
     "admin.langZh": "中文",
     "admin.langEn": "English",
+
+    // Analytics
+    "admin.analytics": "Analytics",
+    "admin.totalViews": "Total Views",
+    "admin.recentComments7d": "Comments (7d)",
+    "admin.topPosts": "Top Posts",
+    "admin.views": "Views",
+    "admin.publishHistory": "Publish History",
+    "admin.exportPosts": "Export Posts",
   },
 };
 

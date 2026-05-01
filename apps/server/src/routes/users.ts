@@ -61,6 +61,8 @@ export default async function usersRoutes(app: FastifyInstance) {
       displayName?: string;
       role?: string;
       password?: string;
+      bio?: string;
+      website?: string;
     };
   }>("/:id", async (request, reply) => {
     if (request.user.role !== "admin") {
@@ -80,6 +82,8 @@ export default async function usersRoutes(app: FastifyInstance) {
     if (request.body.displayName) updateData.displayName = request.body.displayName;
     if (request.body.role) updateData.role = request.body.role;
     if (request.body.password) updateData.passwordHash = hashSync(request.body.password, 10);
+    if (request.body.bio !== undefined) updateData.bio = request.body.bio;
+    if (request.body.website !== undefined) updateData.website = request.body.website;
 
     if (Object.keys(updateData).length === 0) {
       return { success: true, data: existing };

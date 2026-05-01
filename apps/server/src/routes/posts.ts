@@ -253,4 +253,58 @@ export default async function postsRoutes(app: FastifyInstance) {
     await db.delete(posts).where(eq(posts.id, id)).run();
     return { success: true };
   });
+
+  // Export all posts as JSON
+  app.get("/export", async () => {
+    const allPosts = await db.select({
+      id: posts.id,
+      title: posts.title,
+      slug: posts.slug,
+      content: posts.content,
+      excerpt: posts.excerpt,
+      coverImage: posts.coverImage,
+      status: posts.status,
+      pinned: posts.pinned,
+      publishedAt: posts.publishedAt,
+      createdAt: posts.createdAt,
+    }).from(posts).orderBy(desc(posts.createdAt)).all();
+
+    return { success: true, data: allPosts };
+  });
+
+  // Analytics/stats
+  app.get("/stats", async () => {
+    const topViewed = await db.select({
+      id: posts.id, title: posts.title, slug: posts.slug, viewCount: posts.viewCount,
+    }).from(posts).where(eq(posts.status, "published"))
+      .orderBy(desc(posts.viewCount)).limit(10).all();
+
+    const [{ totalViews }] = await db.select({
+      totalViews: sql<number>`COALESCE(SUM(view_count), 0)`,
+    }).from(posts).all();
+
+    const recentComments = await db.select({
+      count: sql<number>`count(*)`,
+    }).from(comments).where(
+      sql`created_at >= datetime('now', '-7 days')`
+    ).all();
+
+    const postsByMonth = await db.select({
+      month: sql<string>`strftime('%Y-%m', published_at)`,
+      count: sql<number>`count(*)`,
+    }).from(posts).where(eq(posts.status, "published"))
+      .groupBy(sql`strftime('%Y-%m', published_at)`)
+      .orderBy(desc(sql`strftime('%Y-%m', published_at)`))
+      .limit(12).all();
+
+    return {
+      success: true,
+      data: {
+        topViewed,
+        totalViews,
+        recentComments: recentComments[0]?.count || 0,
+        postsByMonth,
+      },
+    };
+  });
 }
