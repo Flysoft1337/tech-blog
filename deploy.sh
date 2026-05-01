@@ -10,24 +10,26 @@ pnpm build
 echo "==> Syncing API server..."
 rsync -avz --delete \
   apps/server/dist/ \
-  "${SERVER_HOST}:${REMOTE_DIR}/server/dist/"
+  apps/server/package.json \
+  "${SERVER_HOST}:${REMOTE_DIR}/server/"
 
 echo "==> Syncing web (Astro SSR)..."
 rsync -avz --delete \
   apps/web/dist/ \
   "${SERVER_HOST}:${REMOTE_DIR}/web/dist/"
 
-echo "==> Syncing config..."
+rsync -avz apps/web/package.json "${SERVER_HOST}:${REMOTE_DIR}/web/"
+
+echo "==> Syncing config & lockfile..."
 rsync -avz \
   ecosystem.config.cjs \
   Caddyfile \
+  pnpm-lock.yaml \
+  package.json \
   "${SERVER_HOST}:${REMOTE_DIR}/"
 
-echo "==> Syncing node_modules (server deps)..."
-rsync -avz \
-  apps/server/node_modules/ \
-  "${SERVER_HOST}:${REMOTE_DIR}/server/node_modules/" \
-  --delete
+echo "==> Installing dependencies on server..."
+ssh "${SERVER_HOST}" "cd ${REMOTE_DIR}/server && npm install --omit=dev --ignore-scripts 2>/dev/null || pnpm install --prod"
 
 echo "==> Ensuring data directories..."
 ssh "${SERVER_HOST}" "mkdir -p ${REMOTE_DIR}/data/uploads"

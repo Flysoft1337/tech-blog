@@ -1,0 +1,77 @@
+---
+export const prerender = false;
+
+import BlogLayout from "../layouts/BlogLayout.astro";
+
+const API_BASE = import.meta.env.PUBLIC_API_URL || "http://localhost:3000";
+
+let categories: any[] = [];
+
+try {
+  const res = await fetch(`${API_BASE}/api/v1/categories`);
+  const json = await res.json();
+  if (json.success) categories = json.data.filter((c: any) => c.postCount > 0);
+} catch {}
+---
+
+<BlogLayout title="Categories - Tech Blog">
+  <h1 class="page-title">Categories</h1>
+  <div class="categories-grid">
+    {categories.length > 0 ? (
+      categories.map((cat: any) => (
+        <a href={`/category/${cat.slug}`} class="category-card">
+          <h2>{cat.name}</h2>
+          {cat.description && <p class="category-desc">{cat.description}</p>}
+          <span class="post-count">{cat.postCount} {cat.postCount === 1 ? "post" : "posts"}</span>
+        </a>
+      ))
+    ) : (
+      <p class="empty">No categories yet.</p>
+    )}
+  </div>
+</BlogLayout>
+
+<style>
+  .page-title {
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+    max-width: var(--content-width);
+  }
+  .category-card {
+    display: block;
+    padding: 1.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    color: var(--color-text);
+  }
+  .category-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+  }
+  .category-card h2 {
+    font-size: 1.15rem;
+    margin-bottom: 0.25rem;
+  }
+  .category-desc {
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+  }
+  .post-count {
+    font-size: 0.8rem;
+    color: var(--color-primary);
+    font-weight: 500;
+  }
+  .empty {
+    color: var(--color-text-secondary);
+    text-align: center;
+    padding: 3rem 0;
+  }
+</style>

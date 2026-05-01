@@ -49,7 +49,23 @@ export async function renderMarkdown(content: string): Promise<string> {
     }
   };
 
-  const html = await marked(content, { renderer });
+  renderer.heading = function ({ text, depth }) {
+    const slug = text
+      .toLowerCase()
+      .replace(/<[^>]*>/g, "")
+      .replace(/[^\w一-鿿]+/g, "-")
+      .replace(/^-|-$/g, "");
+    return `<h${depth} id="${slug}">${text}</h${depth}>`;
+  };
+
+  renderer.link = function ({ href, title, text }) {
+    const isExternal = href && (href.startsWith("http://") || href.startsWith("https://"));
+    const attrs = isExternal ? ' target="_blank" rel="nofollow noopener"' : "";
+    const titleAttr = title ? ` title="${title}"` : "";
+    return `<a href="${href}"${titleAttr}${attrs}>${text}</a>`;
+  };
+
+  const html = await marked(content, { renderer, gfm: true, breaks: true });
 
   return sanitizeHtml(html, {
     allowedTags: sanitizeHtml.defaults.allowedTags.concat([
