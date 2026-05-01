@@ -9,9 +9,10 @@
     "preview": "astro preview"
   },
   "dependencies": {
-    "@astrojs/vue": "^5.0.0",
+    "@astrojs/node": "^10.0.6",
+    "@astrojs/vue": "^6.0.1",
     "@tech-blog/shared": "workspace:*",
-    "astro": "^5.7.0",
+    "astro": "^6.2.1",
     "vue": "^3.5.0"
   },
   "devDependencies": {

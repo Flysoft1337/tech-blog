@@ -23,6 +23,12 @@ export async function buildApp() {
 
   await app.register(authPlugin);
 
+  app.get("/", async () => ({
+    name: "tech-blog-api",
+    version: "0.0.1",
+    status: "ok",
+  }));
+
   // API routes
   await app.register(authRoutes, { prefix: "/api/v1/auth" });
   await app.register(publicRoutes, { prefix: "/api/v1" });
