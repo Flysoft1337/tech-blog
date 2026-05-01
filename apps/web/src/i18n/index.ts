@@ -33,6 +33,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "home.noPosts": "还没有发布文章。前往",
     "home.adminPanel": "管理面板",
     "home.startWriting": "开始写作。",
+    "home.popularPosts": "热门文章",
 
     // Post
     "post.minRead": "{n} 分钟阅读",
@@ -214,6 +215,12 @@ const translations: Record<Locale, Record<string, string>> = {
     "editor.scheduledAt": "发布时间",
     "editor.seriesLabel": "系列",
     "editor.seriesOrder": "系列排序",
+    "editor.autoSaved": "自动保存于 {time}",
+    "editor.versionHistory": "版本历史",
+    "editor.viewVersions": "查看历史版本",
+    "editor.restore": "恢复",
+    "editor.confirmRestore": "确定恢复到此版本？当前内容将被替换。",
+    "editor.restored": "版本已恢复！",
 
     // Comment manager
     "admin.pending": "待审核",
@@ -312,6 +319,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "home.noPosts": "No posts published yet. Start writing from the",
     "home.adminPanel": "admin panel",
     "home.startWriting": ".",
+    "home.popularPosts": "Popular Posts",
 
     // Post
     "post.minRead": "{n} min read",
@@ -493,6 +501,12 @@ const translations: Record<Locale, Record<string, string>> = {
     "editor.scheduledAt": "Publish At",
     "editor.seriesLabel": "Series",
     "editor.seriesOrder": "Series Order",
+    "editor.autoSaved": "Auto-saved at {time}",
+    "editor.versionHistory": "Version History",
+    "editor.viewVersions": "View Versions",
+    "editor.restore": "Restore",
+    "editor.confirmRestore": "Restore to this version? Current content will be replaced.",
+    "editor.restored": "Version restored!",
 
     // Comment manager
     "admin.pending": "Pending",

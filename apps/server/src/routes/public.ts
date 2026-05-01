@@ -15,6 +15,25 @@ import { eq, desc, asc, and, sql, like, or, gt, lt } from "drizzle-orm";
 import sanitizeHtml from "sanitize-html";
 
 export default async function publicRoutes(app: FastifyInstance) {
+  // Popular posts (for sidebar widget)
+  app.get("/posts/popular", async () => {
+    const items = await db.select({
+      id: posts.id, title: posts.title, slug: posts.slug,
+      viewCount: posts.viewCount, publishedAt: posts.publishedAt,
+    }).from(posts).where(eq(posts.status, "published"))
+      .orderBy(desc(posts.viewCount)).limit(5).all();
+    return { success: true, data: items };
+  });
+
+  // Recent posts (for sidebar widget)
+  app.get("/posts/recent", async () => {
+    const items = await db.select({
+      id: posts.id, title: posts.title, slug: posts.slug, publishedAt: posts.publishedAt,
+    }).from(posts).where(eq(posts.status, "published"))
+      .orderBy(desc(posts.publishedAt)).limit(5).all();
+    return { success: true, data: items };
+  });
+
   // Public posts list
   app.get<{
     Querystring: { page?: string; pageSize?: string; category?: string; tag?: string; q?: string };

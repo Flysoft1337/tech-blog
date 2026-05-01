@@ -13,13 +13,19 @@ const q = Astro.url.searchParams.get("q") || "";
 const API_BASE = import.meta.env.PUBLIC_API_URL || "http://localhost:3000";
 
 let posts = { items: [], total: 0, page: 1, pageSize: 10, totalPages: 1 };
+let popularPosts: any[] = [];
 
 try {
   const params = new URLSearchParams({ page: String(page) });
   if (q) params.set("q", q);
-  const res = await fetch(`${API_BASE}/api/v1/posts?${params}`);
-  const json = await res.json();
+  const [postsRes, popularRes] = await Promise.all([
+    fetch(`${API_BASE}/api/v1/posts?${params}`),
+    fetch(`${API_BASE}/api/v1/posts/popular`),
+  ]);
+  const json = await postsRes.json();
   if (json.success) posts = json.data;
+  const popJson = await popularRes.json();
+  if (popJson.success) popularPosts = popJson.data;
 } catch {
   // API not available during build
 }
@@ -68,6 +74,19 @@ const basePath = q ? `/?q=${encodeURIComponent(q)}` : "/";
       )}
     </section>
     <Pagination currentPage={posts.page} totalPages={posts.totalPages} basePath={basePath} />
+    {popularPosts.length > 0 && (
+      <aside class="popular-sidebar">
+        <h3>{t("home.popularPosts")}</h3>
+        <ul>
+          {popularPosts.map((p: any) => (
+            <li>
+              <a href={`/post/${p.slug}`}>{p.title}</a>
+              <span class="view-badge">{p.viewCount} {t("post.views", { n: "" }).trim()}</span>
+            </li>
+          ))}
+        </ul>
+      </aside>
+    )}
   </div>
 </BlogLayout>
 
@@ -102,5 +121,48 @@ const basePath = q ? `/?q=${encodeURIComponent(q)}` : "/";
   .empty-state h2 {
     color: var(--color-text);
     margin-bottom: 0.5rem;
+  }
+  .popular-sidebar {
+    margin-top: 3rem;
+    padding: 1.5rem;
+    background: var(--color-bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+  }
+  .popular-sidebar h3 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+  .popular-sidebar ul {
+    list-style: none;
+    padding: 0;
+  }
+  .popular-sidebar li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--color-border);
+    gap: 1rem;
+  }
+  .popular-sidebar li:last-child {
+    border-bottom: none;
+  }
+  .popular-sidebar a {
+    font-size: 0.9rem;
+    color: var(--color-text);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .popular-sidebar a:hover {
+    color: var(--color-primary);
+  }
+  .view-badge {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
   }
 </style>

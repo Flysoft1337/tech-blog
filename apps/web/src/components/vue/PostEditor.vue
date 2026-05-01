@@ -96,6 +96,31 @@
             <p v-if="message" :class="success ? 'success-msg' : 'error-msg'" style="margin-top:0.5rem; font-size:0.85rem">
               {{ message }}
             </p>
+            <p v-if="lastAutoSave" style="margin-top:0.25rem; font-size:0.75rem; color:var(--color-text-secondary)">
+              {{ t("editor.autoSaved", { time: lastAutoSave }) }}
+            </p>
+          </div>
+          <div v-if="props.postId" class="admin-card" style="margin-top:1rem">
+            <div class="form-group" style="margin-bottom:0">
+              <label style="margin-bottom:0.5rem">{{ t("editor.versionHistory") }}</label>
+              <button type="button" class="btn" style="width:100%; font-size:0.8rem" @click="loadVersions">
+                {{ t("editor.viewVersions") }}
+              </button>
+              <div v-if="versions.length > 0" class="versions-list">
+                <div v-for="v in versions" :key="v.id" class="version-item">
+                  <div>
+                    <span style="font-size:0.8rem; font-weight:500">{{ v.title }}</span>
+                    <span style="font-size:0.7rem; color:var(--color-text-secondary); margin-left:0.5rem">{{ v.editorName }}</span>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:0.5rem">
+                    <span style="font-size:0.7rem; color:var(--color-text-secondary)">{{ formatVersionDate(v.createdAt) }}</span>
+                    <button type="button" class="btn" style="font-size:0.7rem; padding:0.15rem 0.4rem" @click="restoreVersion(v.id)">
+                      {{ t("editor.restore") }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="admin-card" style="margin-top:1rem">
             <div class="form-group" style="margin-bottom:0">
@@ -416,15 +441,65 @@ async function savePost() {
   }
 }
 
+let autoSaveTimer: ReturnType<typeof setInterval> | null = null;
+const lastAutoSave = ref("");
+const versions = ref<any[]>([]);
+
+function formatVersionDate(d: string) {
+  if (!d) return "";
+  return new Date(d).toLocaleString();
+}
+
+async function loadVersions() {
+  if (!props.postId) return;
+  try {
+    const res = await fetch(`/api/v1/admin/posts/${props.postId}/versions`, { headers: getHeaders() });
+    const data = await res.json();
+    if (data.success) versions.value = data.data;
+  } catch {}
+}
+
+async function restoreVersion(versionId: number) {
+  if (!props.postId || !confirm(t("editor.confirmRestore"))) return;
+  try {
+    const res = await fetch(`/api/v1/admin/posts/${props.postId}/versions/${versionId}/restore`, {
+      method: "POST",
+      headers: getHeaders(),
+    });
+    const data = await res.json();
+    if (data.success) {
+      form.value.title = data.data.title;
+      form.value.content = data.data.content;
+      takeSnapshot();
+      if (typeof window.showToast === "function") window.showToast(t("editor.restored"));
+    }
+  } catch {}
+}
+
+async function autoSave() {
+  if (!props.postId || !isDirty.value || loading.value) return;
+  try {
+    await fetch(`/api/v1/admin/posts/${props.postId}`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify(form.value),
+    });
+    takeSnapshot();
+    lastAutoSave.value = new Date().toLocaleTimeString();
+  } catch {}
+}
+
 onMounted(() => {
   loadData();
   document.addEventListener("keydown", handleKeydown);
   window.addEventListener("beforeunload", handleBeforeUnload);
+  autoSaveTimer = setInterval(autoSave, 30_000);
 });
 
 onUnmounted(() => {
   document.removeEventListener("keydown", handleKeydown);
   window.removeEventListener("beforeunload", handleBeforeUnload);
+  if (autoSaveTimer) clearInterval(autoSaveTimer);
 });
 </script>
 
@@ -594,5 +669,21 @@ onUnmounted(() => {
   text-align: center;
   word-break: break-all;
   color: var(--color-text-secondary);
+}
+.versions-list {
+  margin-top: 0.75rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.version-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-border);
+  gap: 0.5rem;
+}
+.version-item:last-child {
+  border-bottom: none;
 }
 </style>
