@@ -85,7 +85,7 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
           {date && <time>{date}</time>}
           <span>{t("post.minRead", { n: readingTime })}</span>
           <span>{t("post.views", { n: post.viewCount || 0 })}</span>
-          <span class="like-count" id="like-count">{post.likeCount || 0}</span>
+          <span id="like-count">♡ {post.likeCount || 0}</span>
         </div>
         {post.tags?.length > 0 && (
           <div class="post-tags">
@@ -152,18 +152,6 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
     <h2>{t("post.comments")}</h2>
     <CommentForm client:visible slug={slug!} />
   </section>
-  {post.author?.bio && (
-    <section class="author-card">
-      <div class="author-avatar">
-        {post.author.avatar ? <img src={post.author.avatar} alt={post.author.displayName} /> : <div class="avatar-placeholder">{post.author.displayName[0]}</div>}
-      </div>
-      <div class="author-info">
-        <h3>{post.author.displayName}</h3>
-        <p>{post.author.bio}</p>
-        {post.author.website && <a href={post.author.website} target="_blank" rel="noopener">{post.author.website}</a>}
-      </div>
-    </section>
-  )}
   <button class="like-btn" id="like-btn" aria-label="Like">♡ <span id="like-text">{post.likeCount || 0}</span></button>
 
   {post.author && post.author.bio && (
@@ -250,20 +238,20 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
 <script is:inline>
 (function(){
   var btn=document.getElementById("like-btn");
+  var lc=document.getElementById("like-count");
   var slug=window.location.pathname.split("/post/")[1];
   if(!btn||!slug)return;
+  function updateLike(count,liked){
+    btn.querySelector("span").textContent=count;
+    btn.classList.toggle("liked",liked);
+    if(lc)lc.textContent="♡ "+count;
+  }
   fetch("/api/v1/posts/"+slug+"/likes").then(function(r){return r.json()}).then(function(d){
-    if(d.success){
-      btn.querySelector("span").textContent=d.data.count;
-      if(d.data.liked)btn.classList.add("liked");
-    }
+    if(d.success)updateLike(d.data.count,d.data.liked);
   });
   btn.addEventListener("click",function(){
     fetch("/api/v1/posts/"+slug+"/like",{method:"POST"}).then(function(r){return r.json()}).then(function(d){
-      if(d.success){
-        btn.querySelector("span").textContent=d.data.count;
-        btn.classList.toggle("liked",d.data.liked);
-      }
+      if(d.success)updateLike(d.data.count,d.data.liked);
     });
   });
 })();
@@ -581,41 +569,6 @@ while ((match = headingRegex.exec(post.contentHtml)) !== null) {
   }
   .like-btn.liked {
     background: #fef2f2;
-  }
-  .author-card {
-    display: flex;
-    gap: 1.25rem;
-    margin-top: 3rem;
-    padding: 1.5rem;
-    background: var(--color-bg-secondary);
-    border-radius: 12px;
-  }
-  .author-avatar img, .avatar-placeholder {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    object-fit: cover;
-  }
-  .avatar-placeholder {
-    background: var(--color-primary);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    font-weight: 600;
-  }
-  .author-info h3 {
-    font-size: 1.1rem;
-    margin-bottom: 0.25rem;
-  }
-  .author-info p {
-    font-size: 0.9rem;
-    color: var(--color-text-secondary);
-    line-height: 1.6;
-  }
-  .author-info a {
-    font-size: 0.85rem;
   }
   .shortcuts-overlay {
     position: fixed;

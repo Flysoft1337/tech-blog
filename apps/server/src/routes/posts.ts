@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { db } from "../db/index.js";
-import { posts, postTags, categories, tags, users } from "../db/schema.js";
-import { eq, sql, desc, and, like, or } from "drizzle-orm";
+import { posts, postTags, categories, tags, users, postVersions, comments } from "../db/schema.js";
+import { eq, sql, desc, and, like, or, asc } from "drizzle-orm";
 import { renderMarkdown } from "../services/markdown.js";
 
 export default async function postsRoutes(app: FastifyInstance) {
@@ -71,6 +71,51 @@ export default async function postsRoutes(app: FastifyInstance) {
         totalPages: Math.ceil(count / pageSize),
       },
     };
+  });
+
+  // Export all posts as JSON (must be before /:id)
+  app.get("/export", async () => {
+    const allPosts = await db.select({
+      id: posts.id, title: posts.title, slug: posts.slug, content: posts.content,
+      excerpt: posts.excerpt, coverImage: posts.coverImage, status: posts.status,
+      pinned: posts.pinned, publishedAt: posts.publishedAt, createdAt: posts.createdAt,
+    }).from(posts).orderBy(desc(posts.createdAt)).all();
+    return { success: true, data: allPosts };
+  });
+
+  // Analytics/stats (must be before /:id)
+  app.get("/stats", async () => {
+    const topViewed = await db.select({
+      id: posts.id, title: posts.title, slug: posts.slug, viewCount: posts.viewCount,
+    }).from(posts).where(eq(posts.status, "published"))
+      .orderBy(desc(posts.viewCount)).limit(10).all();
+
+    const [{ totalViews }] = await db.select({
+      totalViews: sql<number>`COALESCE(SUM(view_count), 0)`,
+    }).from(posts).all();
+
+    const recentComments = await db.select({
+      count: sql<number>`count(*)`,
+    }).from(comments).where(sql`created_at >= datetime('now', '-7 days')`).all();
+
+    const postsByMonth = await db.select({
+      month: sql<string>`strftime('%Y-%m', published_at)`,
+      count: sql<number>`count(*)`,
+    }).from(posts).where(eq(posts.status, "published"))
+      .groupBy(sql`strftime('%Y-%m', published_at)`)
+      .orderBy(desc(sql`strftime('%Y-%m', published_at)`))
+      .limit(12).all();
+
+    return {
+      success: true,
+      data: { topViewed, totalViews, recentComments: recentComments[0]?.count || 0, postsByMonth },
+    };
+  });
+
+  // Preview markdown (must be before /:id)
+  app.post<{ Body: { content: string } }>("/preview", async (request) => {
+    const html = await renderMarkdown(request.body.content || "");
+    return { success: true, data: { html } };
   });
 
   // Get single post
@@ -175,6 +220,8 @@ export default async function postsRoutes(app: FastifyInstance) {
       }
     }
 
+    await db.insert(postVersions).values({ postId: result.id, title: data.title, content: data.content, editorId: request.user.id }).run();
+
     return { success: true, data: result };
   });
 
@@ -234,13 +281,13 @@ export default async function postsRoutes(app: FastifyInstance) {
       }
     }
 
-    return { success: true, data: result };
-  });
+    if (data.content || data.title) {
+      await db.insert(postVersions).values({
+        postId: id, title: data.title || existing.title, content: data.content || existing.content, editorId: request.user.id,
+      }).run();
+    }
 
-  // Preview markdown
-  app.post<{ Body: { content: string } }>("/preview", async (request) => {
-    const html = await renderMarkdown(request.body.content || "");
-    return { success: true, data: { html } };
+    return { success: true, data: result };
   });
 
   // Delete post
@@ -254,57 +301,38 @@ export default async function postsRoutes(app: FastifyInstance) {
     return { success: true };
   });
 
-  // Export all posts as JSON
-  app.get("/export", async () => {
-    const allPosts = await db.select({
-      id: posts.id,
-      title: posts.title,
-      slug: posts.slug,
-      content: posts.content,
-      excerpt: posts.excerpt,
-      coverImage: posts.coverImage,
-      status: posts.status,
-      pinned: posts.pinned,
-      publishedAt: posts.publishedAt,
-      createdAt: posts.createdAt,
-    }).from(posts).orderBy(desc(posts.createdAt)).all();
-
-    return { success: true, data: allPosts };
+  // Version history
+  app.get<{ Params: { id: string } }>("/:id/versions", async (request) => {
+    const id = Number(request.params.id);
+    const versions = await db.select({
+      id: postVersions.id, title: postVersions.title,
+      editorId: postVersions.editorId, createdAt: postVersions.createdAt,
+      editorName: users.displayName,
+    }).from(postVersions)
+      .leftJoin(users, eq(postVersions.editorId, users.id))
+      .where(eq(postVersions.postId, id))
+      .orderBy(desc(postVersions.createdAt)).limit(50).all();
+    return { success: true, data: versions };
   });
 
-  // Analytics/stats
-  app.get("/stats", async () => {
-    const topViewed = await db.select({
-      id: posts.id, title: posts.title, slug: posts.slug, viewCount: posts.viewCount,
-    }).from(posts).where(eq(posts.status, "published"))
-      .orderBy(desc(posts.viewCount)).limit(10).all();
+  app.get<{ Params: { id: string; versionId: string } }>("/:id/versions/:versionId", async (request, reply) => {
+    const version = await db.select().from(postVersions)
+      .where(and(eq(postVersions.id, Number(request.params.versionId)), eq(postVersions.postId, Number(request.params.id))))
+      .get();
+    if (!version) return reply.status(404).send({ success: false, error: "Version not found" });
+    return { success: true, data: version };
+  });
 
-    const [{ totalViews }] = await db.select({
-      totalViews: sql<number>`COALESCE(SUM(view_count), 0)`,
-    }).from(posts).all();
+  app.post<{ Params: { id: string; versionId: string } }>("/:id/versions/:versionId/restore", async (request, reply) => {
+    const id = Number(request.params.id);
+    const version = await db.select().from(postVersions)
+      .where(and(eq(postVersions.id, Number(request.params.versionId)), eq(postVersions.postId, id)))
+      .get();
+    if (!version) return reply.status(404).send({ success: false, error: "Version not found" });
 
-    const recentComments = await db.select({
-      count: sql<number>`count(*)`,
-    }).from(comments).where(
-      sql`created_at >= datetime('now', '-7 days')`
-    ).all();
-
-    const postsByMonth = await db.select({
-      month: sql<string>`strftime('%Y-%m', published_at)`,
-      count: sql<number>`count(*)`,
-    }).from(posts).where(eq(posts.status, "published"))
-      .groupBy(sql`strftime('%Y-%m', published_at)`)
-      .orderBy(desc(sql`strftime('%Y-%m', published_at)`))
-      .limit(12).all();
-
-    return {
-      success: true,
-      data: {
-        topViewed,
-        totalViews,
-        recentComments: recentComments[0]?.count || 0,
-        postsByMonth,
-      },
-    };
+    const contentHtml = await renderMarkdown(version.content);
+    const result = await db.update(posts).set({ title: version.title, content: version.content, contentHtml })
+      .where(eq(posts.id, id)).returning().get();
+    return { success: true, data: result };
   });
 }

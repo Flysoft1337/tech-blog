@@ -225,7 +225,7 @@ async function renderPreview() {
   if (previewTimer) clearTimeout(previewTimer);
   previewTimer = setTimeout(async () => {
     try {
-      const res = await fetch("/api/v1/admin/preview", {
+      const res = await fetch("/api/v1/admin/posts/preview", {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify({ content: form.value.content }),
