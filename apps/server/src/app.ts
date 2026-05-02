@@ -17,7 +17,7 @@ import seriesRoutes from "./routes/series.js";
 import publicRoutes from "./routes/public.js";
 
 export async function buildApp() {
-  const app = Fastify({ logger: true });
+  const app = Fastify({ logger: true, trustProxy: true });
 
   await app.register(cors, {
     origin: true,

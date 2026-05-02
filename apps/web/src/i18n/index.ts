@@ -51,6 +51,9 @@ const translations: Record<Locale, Record<string, string>> = {
     "post.share": "分享",
     "post.copyLink": "复制链接",
     "post.like": "点赞",
+    "post.shortcuts": "键盘快捷键",
+    "post.toggleShortcuts": "显示/隐藏快捷键",
+    "post.closeOverlay": "关闭弹窗",
 
     // Comment
     "comment.noComments": "暂无评论，来做第一个留言的人！",
@@ -337,6 +340,9 @@ const translations: Record<Locale, Record<string, string>> = {
     "post.share": "Share",
     "post.copyLink": "Copy link",
     "post.like": "Like",
+    "post.shortcuts": "Keyboard Shortcuts",
+    "post.toggleShortcuts": "Toggle shortcuts",
+    "post.closeOverlay": "Close overlay",
 
     // Comment
     "comment.noComments": "No comments yet. Be the first!",

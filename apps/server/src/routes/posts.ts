@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { db } from "../db/index.js";
-import { posts, postTags, categories, tags, users, postVersions } from "../db/schema.js";
-import { eq, sql, desc, and, like, or, asc } from "drizzle-orm";
+import { posts, postTags, categories, tags, users } from "../db/schema.js";
+import { eq, sql, desc, and, like, or } from "drizzle-orm";
 import { renderMarkdown } from "../services/markdown.js";
 
 export default async function postsRoutes(app: FastifyInstance) {
@@ -175,14 +175,6 @@ export default async function postsRoutes(app: FastifyInstance) {
       }
     }
 
-    // Save initial version
-    await db.insert(postVersions).values({
-      postId: result.id,
-      title: data.title,
-      content: data.content,
-      editorId: request.user.id,
-    }).run();
-
     return { success: true, data: result };
   });
 
@@ -242,16 +234,6 @@ export default async function postsRoutes(app: FastifyInstance) {
       }
     }
 
-    // Save version on content/title change
-    if (data.content || data.title) {
-      await db.insert(postVersions).values({
-        postId: id,
-        title: data.title || existing.title,
-        content: data.content || existing.content,
-        editorId: request.user.id,
-      }).run();
-    }
-
     return { success: true, data: result };
   });
 
@@ -270,50 +252,6 @@ export default async function postsRoutes(app: FastifyInstance) {
     }
     await db.delete(posts).where(eq(posts.id, id)).run();
     return { success: true };
-  });
-
-  // Get version history for a post
-  app.get<{ Params: { id: string } }>("/:id/versions", async (request, reply) => {
-    const id = Number(request.params.id);
-    const versions = await db.select({
-      id: postVersions.id,
-      title: postVersions.title,
-      editorId: postVersions.editorId,
-      createdAt: postVersions.createdAt,
-      editorName: users.displayName,
-    }).from(postVersions)
-      .leftJoin(users, eq(postVersions.editorId, users.id))
-      .where(eq(postVersions.postId, id))
-      .orderBy(desc(postVersions.createdAt))
-      .limit(50).all();
-    return { success: true, data: versions };
-  });
-
-  // Get a specific version
-  app.get<{ Params: { id: string; versionId: string } }>("/:id/versions/:versionId", async (request, reply) => {
-    const version = await db.select().from(postVersions)
-      .where(and(eq(postVersions.id, Number(request.params.versionId)), eq(postVersions.postId, Number(request.params.id))))
-      .get();
-    if (!version) return reply.status(404).send({ success: false, error: "Version not found" });
-    return { success: true, data: version };
-  });
-
-  // Restore a version
-  app.post<{ Params: { id: string; versionId: string } }>("/:id/versions/:versionId/restore", async (request, reply) => {
-    const id = Number(request.params.id);
-    const version = await db.select().from(postVersions)
-      .where(and(eq(postVersions.id, Number(request.params.versionId)), eq(postVersions.postId, id)))
-      .get();
-    if (!version) return reply.status(404).send({ success: false, error: "Version not found" });
-
-    const contentHtml = await renderMarkdown(version.content);
-    const result = await db.update(posts).set({
-      title: version.title,
-      content: version.content,
-      contentHtml,
-    }).where(eq(posts.id, id)).returning().get();
-
-    return { success: true, data: result };
   });
 
   // Export all posts as JSON

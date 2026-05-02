@@ -129,18 +129,3 @@ export const postLikes = sqliteTable("post_likes", {
     .notNull()
     .default(sql`(datetime('now'))`),
 });
-
-export const postVersions = sqliteTable("post_versions", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  postId: integer("post_id")
-    .notNull()
-    .references(() => posts.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  content: text("content").notNull(),
-  editorId: integer("editor_id")
-    .notNull()
-    .references(() => users.id),
-  createdAt: text("created_at")
-    .notNull()
-    .default(sql`(datetime('now'))`),
-});
