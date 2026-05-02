@@ -54,9 +54,9 @@
               <label>{{ t("editor.scheduledAt") }}</label>
               <input v-model="form.scheduledAt" type="datetime-local" />
             </div>
-            <div class="form-group">
-              <label>
-                <input type="checkbox" v-model="form.pinned" /> {{ t("editor.pinPost") }}
+            <div class="form-group" style="margin-bottom:0.5rem">
+              <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0; cursor:pointer">
+                <input type="checkbox" v-model="form.pinned" style="width:auto" /> {{ t("editor.pinPost") }}
               </label>
             </div>
             <div class="form-group">
@@ -79,8 +79,9 @@
             </div>
             <div class="form-group">
               <label>{{ t("editor.tagsLabel") }}</label>
+              <input v-model="tagSearch" type="search" :placeholder="t('admin.searchPosts')" class="tag-search" />
               <div class="tag-select">
-                <label v-for="tag in tags" :key="tag.id" class="tag-option">
+                <label v-for="tag in filteredTags" :key="tag.id" class="tag-option" :class="{ checked: form.tagIds.includes(tag.id) }">
                   <input type="checkbox" :value="tag.id" v-model="form.tagIds" />
                   {{ tag.name }}
                 </label>
@@ -194,6 +195,13 @@ function handleBeforeUnload(e: BeforeUnloadEvent) {
 const categories = ref<any[]>([]);
 const tags = ref<any[]>([]);
 const seriesList = ref<any[]>([]);
+const tagSearch = ref("");
+
+const filteredTags = computed(() => {
+  if (!tagSearch.value) return tags.value;
+  const q = tagSearch.value.toLowerCase();
+  return tags.value.filter((tag: any) => tag.name.toLowerCase().includes(q));
+});
 const loading = ref(false);
 const message = ref("");
 const success = ref(false);
@@ -574,17 +582,46 @@ onUnmounted(() => {
   background: var(--color-bg);
   overflow-y: auto;
 }
+.tag-search {
+  margin-bottom: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+}
 .tag-select {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.25rem;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.5rem;
 }
 .tag-option {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  font-size: 0.85rem;
+  gap: 0.3rem;
+  font-size: 0.78rem;
   font-weight: normal;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tag-option:hover {
+  background: var(--color-bg-secondary);
+}
+.tag-option.checked {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--color-primary);
+}
+.tag-option input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  flex-shrink: 0;
 }
 .success-msg {
   color: #059669;
